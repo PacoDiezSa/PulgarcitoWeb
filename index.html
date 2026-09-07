@@ -181,6 +181,7 @@
       }
       // Waypoint seleccionado en el mapa
       let marcadorWaypoint = null;
+      let waypointActivo = null;
       let crearWaypointActivo = false;
 
       document
@@ -398,8 +399,15 @@
                 return;
               }
 
+              // Guardar este waypoint como destino activo
+              waypointActivo = waypoint;
+
+              console.log("Waypoint activo:", waypoint.nombre);
+
+              // Centrar el mapa
               mapa.setView([waypoint.latitud, waypoint.longitud], 16);
 
+              // Cerrar la lista
               document.getElementById("panelWaypoints").style.display = "none";
             });
 
