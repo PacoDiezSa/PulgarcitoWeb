@@ -260,6 +260,8 @@
       let seguimientoGPS = null;
       let marcadorGPS = null;
 
+      let ultimaLatitudGPS = null;
+      let ultimaLongitudGPS = null;
       // Obtener posición y comenzar seguimiento
       function obtenerPosicion() {
         if (!navigator.geolocation) {
@@ -278,6 +280,9 @@
             const lat = posicion.coords.latitude;
 
             const lon = posicion.coords.longitude;
+
+            ultimaLatitudGPS = lat;
+            ultimaLongitudGPS = lon;
 
             console.log("Latitud:", lat, "Longitud:", lon);
 
@@ -391,18 +396,19 @@
               document.getElementById("panelWaypoints").style.display = "none";
             });
             lista.appendChild(elemento);
-            if (marcadorGPS !== null && marcadorGPS.getLatLng()) {
-              const posicionGPS = marcadorGPS.getLatLng();
-
+            if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
               const distancia = calcularDistancia(
-                posicionGPS.lat,
-                posicionGPS.lng,
+                ultimaLatitudGPS,
+                ultimaLongitudGPS,
                 waypoint.latitud,
                 waypoint.longitud,
               );
 
               elemento.querySelector(".distanciaWaypoint").textContent =
                 "Distancia: " + Math.round(distancia) + " m";
+            } else {
+              elemento.querySelector(".distanciaWaypoint").textContent =
+                "Distancia: GPS no disponible";
             }
           });
         }
