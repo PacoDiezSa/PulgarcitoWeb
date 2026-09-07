@@ -84,6 +84,28 @@
           attribution: "PNOA © Instituto Geográfico Nacional",
         })
         .addTo(mapa);
+
+      // Waypoint seleccionado en el mapa
+      let marcadorWaypoint = null;
+
+      mapa.on("click", function (e) {
+        const lat = e.latlng.lat;
+        const lon = e.latlng.lng;
+
+        console.log("Waypoint:", lat, lon);
+
+        // Si ya había un waypoint, quitarlo
+        if (marcadorWaypoint !== null) {
+          mapa.removeLayer(marcadorWaypoint);
+        }
+
+        // Crear nuevo marcador
+        marcadorWaypoint = L.marker([lat, lon])
+          .addTo(mapa)
+          .bindPopup("Waypoint")
+          .openPopup();
+      });
+
       // Botón GPS
       document
         .getElementById("btnGPS")
