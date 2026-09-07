@@ -346,9 +346,15 @@
               waypoint.latitud.toFixed(6) +
               "<br>" +
               waypoint.longitud.toFixed(6) +
-              '<br><button class="btnBorrarWaypoint">' +
-              "Borrar" +
-              "</button>";
+              "<br>" +
+              '<span class="distanciaWaypoint" ' +
+              'data-indice="' +
+              indice +
+              '">' +
+              "Distancia: calculando..." +
+              "</span>" +
+              '<br><button class="btnBorrarWaypoint">';
+            "Borrar" + "</button>";
 
             elemento.addEventListener("click", function (evento) {
               if (evento.target.classList.contains("btnBorrarWaypoint")) {
@@ -385,10 +391,43 @@
               document.getElementById("panelWaypoints").style.display = "none";
             });
             lista.appendChild(elemento);
+            if (marcadorGPS !== null && marcadorGPS.getLatLng()) {
+              const posicionGPS = marcadorGPS.getLatLng();
+
+              const distancia = calcularDistancia(
+                posicionGPS.lat,
+                posicionGPS.lng,
+                waypoint.latitud,
+                waypoint.longitud,
+              );
+
+              elemento.querySelector(".distanciaWaypoint").textContent =
+                "Distancia: " + Math.round(distancia) + " m";
+            }
           });
         }
 
         document.getElementById("panelWaypoints").style.display = "block";
+      }
+      function calcularDistancia(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+
+        const rad = Math.PI / 180;
+
+        const dLat = (lat2 - lat1) * rad;
+
+        const dLon = (lon2 - lon1) * rad;
+
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * rad) *
+            Math.cos(lat2 * rad) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
       }
     </script>
     <div id="panelWaypoints">
