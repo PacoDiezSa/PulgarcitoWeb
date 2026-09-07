@@ -84,7 +84,15 @@
           attribution: "PNOA © Instituto Geográfico Nacional",
         })
         .addTo(mapa);
+      // Recuperar waypoints guardados
+      let waypoints =
+        JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
 
+      for (const waypoint of waypoints) {
+        L.marker([waypoint.latitud, waypoint.longitud])
+          .addTo(mapa)
+          .bindPopup(waypoint.nombre);
+      }
       // Waypoint seleccionado en el mapa
       let marcadorWaypoint = null;
 
