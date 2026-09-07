@@ -144,6 +144,14 @@
     <button id="btnListaWaypoints">Waypoints</button>
     <div id="mapa"></div>
 
+    <div id="panelWaypoints">
+      <h3>Waypoints guardados</h3>
+
+      <div id="listaWaypoints"></div>
+
+      <button id="btnCerrarWaypoints">Cerrar</button>
+    </div>
+
     <!-- Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -352,14 +360,17 @@
               "<br>" +
               waypoint.longitud.toFixed(6) +
               "<br>" +
-              '<span class="distanciaWaypoint" ' +
-              'data-indice="' +
-              indice +
-              '">' +
+              '<span class="distanciaWaypoint">' +
               "Distancia: calculando..." +
               "</span>" +
-              '<br><button class="btnBorrarWaypoint">';
-            "Borrar" + "</button>";
+              "<br>" +
+              '<span class="rumboWaypoint">' +
+              "Rumbo: calculando..." +
+              "</span>" +
+              "<br>" +
+              '<button class="btnBorrarWaypoint">' +
+              "Borrar" +
+              "</button>";
 
             elemento.addEventListener("click", function (evento) {
               if (evento.target.classList.contains("btnBorrarWaypoint")) {
@@ -371,31 +382,28 @@
                   return;
                 }
 
-                // Eliminar de la lista
                 waypoints.splice(indice, 1);
 
-                // Guardar la nueva lista
                 localStorage.setItem(
                   "pulgarcitoWaypoints",
                   JSON.stringify(waypoints),
                 );
 
-                // Cerrar el popup si estuviera abierto
                 mapa.closePopup();
 
-                // Recargar los marcadores del mapa
                 location.reload();
 
                 return;
               }
 
-              // Si no se ha pulsado Borrar,
-              // centrar el mapa en el waypoint
               mapa.setView([waypoint.latitud, waypoint.longitud], 16);
 
               document.getElementById("panelWaypoints").style.display = "none";
             });
+
             lista.appendChild(elemento);
+
+            // Calcular distancia
             if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
               const distancia = calcularDistancia(
                 ultimaLatitudGPS,
@@ -406,9 +414,23 @@
 
               elemento.querySelector(".distanciaWaypoint").textContent =
                 "Distancia: " + Math.round(distancia) + " m";
+
+              // Calcular rumbo
+              const rumbo = calcularRumbo(
+                ultimaLatitudGPS,
+                ultimaLongitudGPS,
+                waypoint.latitud,
+                waypoint.longitud,
+              );
+
+              elemento.querySelector(".rumboWaypoint").textContent =
+                "Rumbo: " + Math.round(rumbo) + "°";
             } else {
               elemento.querySelector(".distanciaWaypoint").textContent =
                 "Distancia: GPS no disponible";
+
+              elemento.querySelector(".rumboWaypoint").textContent =
+                "Rumbo: GPS no disponible";
             }
           });
         }
@@ -435,13 +457,26 @@
 
         return R * c;
       }
+      function calcularRumbo(lat1, lon1, lat2, lon2) {
+        const rad = Math.PI / 180;
+
+        const phi1 = lat1 * rad;
+        const phi2 = lat2 * rad;
+
+        const deltaLon = (lon2 - lon1) * rad;
+
+        const y = Math.sin(deltaLon) * Math.cos(phi2);
+
+        const x =
+          Math.cos(phi1) * Math.sin(phi2) -
+          Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLon);
+
+        let rumbo = Math.atan2(y, x) / rad;
+
+        rumbo = (rumbo + 360) % 360;
+
+        return rumbo;
+      }
     </script>
-    <div id="panelWaypoints">
-      <h3>Waypoints guardados</h3>
-
-      <div id="listaWaypoints"></div>
-
-      <button id="btnCerrarWaypoints">Cerrar</button>
-    </div>
   </body>
 </html>
