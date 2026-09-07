@@ -73,7 +73,10 @@
         .getElementById("btnGPS")
         .addEventListener("click", obtenerPosicion);
 
-      // Obtener posición
+      let seguimientoGPS = null;
+      let marcadorGPS = null;
+
+      // Obtener posición y comenzar seguimiento
       function obtenerPosicion() {
         if (!navigator.geolocation) {
           alert("Este dispositivo no permite obtener la posición GPS.");
@@ -81,7 +84,12 @@
           return;
         }
 
-        navigator.geolocation.getCurrentPosition(
+        // Si ya estaba activo, no iniciar otro seguimiento
+        if (seguimientoGPS !== null) {
+          return;
+        }
+
+        seguimientoGPS = navigator.geolocation.watchPosition(
           function (posicion) {
             const lat = posicion.coords.latitude;
 
@@ -89,20 +97,33 @@
 
             console.log("Latitud:", lat, "Longitud:", lon);
 
-            // Centrar mapa
+            // Centrar mapa en la primera posición
             mapa.setView([lat, lon], 16);
 
-            // Colocar marcador
-            L.marker([lat, lon])
-              .addTo(mapa)
-              .bindPopup("Mi posición")
-              .openPopup();
+            // Crear el marcador solamente la primera vez
+            if (marcadorGPS === null) {
+              marcadorGPS = L.marker([lat, lon])
+                .addTo(mapa)
+                .bindPopup("Mi posición");
+            } else {
+              // En las siguientes lecturas,
+              // solamente mover el marcador
+              marcadorGPS.setLatLng([lat, lon]);
+            }
           },
 
           function (error) {
             alert("No se ha podido obtener la posición GPS.");
 
             console.log(error);
+
+            seguimientoGPS = null;
+          },
+
+          {
+            enableHighAccuracy: true,
+            maximumAge: 5000,
+            timeout: 10000,
           },
         );
       }
