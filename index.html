@@ -268,6 +268,7 @@
         });
       let seguimientoGPS = null;
       let marcadorGPS = null;
+      let lineaAlWaypoint = null;
 
       let ultimaLatitudGPS = null;
       let ultimaLongitudGPS = null;
@@ -310,7 +311,8 @@
               // solamente mover el marcador
               marcadorGPS.setLatLng([lat, lon]);
             }
-
+            // Actualizar la línea hacia el waypoint activo
+            actualizarLineaAlWaypoint();
             actualizarDistanciasYRumbos();
           },
 
@@ -487,6 +489,33 @@
         rumbo = (rumbo + 360) % 360;
 
         return rumbo;
+      }
+
+      function actualizarLineaAlWaypoint() {
+        // Si no hay waypoint activo, no hacemos nada
+        if (waypointActivo === null) {
+          return;
+        }
+
+        // Si todavía no tenemos posición GPS, no hacemos nada
+        if (ultimaLatitudGPS === null || ultimaLongitudGPS === null) {
+          return;
+        }
+
+        const puntoActual = [ultimaLatitudGPS, ultimaLongitudGPS];
+
+        const puntoWaypoint = [waypointActivo.latitud, waypointActivo.longitud];
+
+        // Crear la línea la primera vez
+        if (lineaAlWaypoint === null) {
+          lineaAlWaypoint = L.polyline([puntoActual, puntoWaypoint], {
+            weight: 4,
+          }).addTo(mapa);
+        } else {
+          // En las siguientes posiciones,
+          // solamente actualizar los dos puntos
+          lineaAlWaypoint.setLatLngs([puntoActual, puntoWaypoint]);
+        }
       }
 
       function actualizarDistanciasYRumbos() {
