@@ -94,6 +94,21 @@
 
         console.log("Waypoint:", lat, lon);
 
+        // Pedir el nombre del waypoint
+        const nombre = prompt("Nombre del waypoint:", "");
+
+        // Si se pulsa Cancelar, no crear el waypoint
+        if (nombre === null) {
+          return;
+        }
+
+        // Si se deja vacío, utilizar un nombre genérico
+        let nombreWaypoint = nombre.trim();
+
+        if (nombreWaypoint === "") {
+          nombreWaypoint = "Waypoint";
+        }
+
         // Si ya había un waypoint, quitarlo
         if (marcadorWaypoint !== null) {
           mapa.removeLayer(marcadorWaypoint);
@@ -102,10 +117,9 @@
         // Crear nuevo marcador
         marcadorWaypoint = L.marker([lat, lon])
           .addTo(mapa)
-          .bindPopup("Waypoint")
+          .bindPopup(nombreWaypoint)
           .openPopup();
       });
-
       // Botón GPS
       document
         .getElementById("btnGPS")
