@@ -109,12 +109,31 @@
           nombreWaypoint = "Waypoint";
         }
 
-        // Si ya había un waypoint, quitarlo
+        // Crear objeto del waypoint
+        const waypoint = {
+          nombre: nombreWaypoint,
+          latitud: lat,
+          longitud: lon,
+        };
+
+        // Leer los waypoints que ya estaban guardados
+        let waypoints =
+          JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+        // Añadir el nuevo waypoint
+        waypoints.push(waypoint);
+
+        // Guardar todos los waypoints
+        localStorage.setItem("pulgarcitoWaypoints", JSON.stringify(waypoints));
+
+        console.log("Waypoint guardado:", waypoint);
+
+        // Si ya había un waypoint mostrado, quitarlo
         if (marcadorWaypoint !== null) {
           mapa.removeLayer(marcadorWaypoint);
         }
 
-        // Crear nuevo marcador
+        // Crear el marcador
         marcadorWaypoint = L.marker([lat, lon])
           .addTo(mapa)
           .bindPopup(nombreWaypoint)
