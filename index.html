@@ -57,13 +57,28 @@
         background: white;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       }
+      #btnWaypoint {
+        position: absolute;
+        top: 115px;
+        left: 15px;
+        z-index: 1000;
+
+        padding: 12px 18px;
+        font-size: 16px;
+
+        border: none;
+        border-radius: 8px;
+
+        background: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
     </style>
   </head>
 
   <body>
     <button id="btnGPS">Mi posición</button>
     <button id="btnSeguirGPS">Seguir GPS</button>
-
+    <button id="btnWaypoint">Crear waypoint</button>
     <div id="mapa"></div>
 
     <!-- Leaflet -->
@@ -95,8 +110,23 @@
       }
       // Waypoint seleccionado en el mapa
       let marcadorWaypoint = null;
+      let crearWaypointActivo = false;
 
+      document
+        .getElementById("btnWaypoint")
+        .addEventListener("click", function () {
+          crearWaypointActivo = !crearWaypointActivo;
+
+          if (crearWaypointActivo) {
+            this.textContent = "Cancelar waypoint";
+          } else {
+            this.textContent = "Crear waypoint";
+          }
+        });
       mapa.on("click", function (e) {
+        if (crearWaypointActivo === false) {
+          return;
+        }
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
 
