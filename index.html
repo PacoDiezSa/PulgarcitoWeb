@@ -72,6 +72,59 @@
         background: white;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       }
+      #btnListaWaypoints {
+        position: absolute;
+        top: 165px;
+        left: 15px;
+        z-index: 1000;
+
+        padding: 12px 18px;
+        font-size: 16px;
+
+        border: none;
+        border-radius: 8px;
+
+        background: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+      #panelWaypoints {
+        display: none;
+
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 2000;
+
+        width: 280px;
+        max-height: 80%;
+
+        overflow-y: auto;
+
+        padding: 15px;
+
+        background: white;
+        border-radius: 10px;
+
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      #panelWaypoints h3 {
+        margin-top: 0;
+      }
+
+      .waypointItem {
+        padding: 10px;
+        margin-bottom: 8px;
+
+        border: 1px solid #ccc;
+        border-radius: 6px;
+
+        cursor: pointer;
+      }
+
+      .waypointItem:hover {
+        background: #eeeeee;
+      }
     </style>
   </head>
 
@@ -79,6 +132,7 @@
     <button id="btnGPS">Mi posición</button>
     <button id="btnSeguirGPS">Seguir GPS</button>
     <button id="btnWaypoint">Crear waypoint</button>
+    <button id="btnListaWaypoints">Waypoints</button>
     <div id="mapa"></div>
 
     <!-- Leaflet -->
@@ -250,6 +304,59 @@
           },
         );
       }
+      document
+        .getElementById("btnListaWaypoints")
+        .addEventListener("click", mostrarListaWaypoints);
+
+      document
+        .getElementById("btnCerrarWaypoints")
+        .addEventListener("click", function () {
+          document.getElementById("panelWaypoints").style.display = "none";
+        });
+
+      function mostrarListaWaypoints() {
+        const lista = document.getElementById("listaWaypoints");
+
+        lista.innerHTML = "";
+
+        const waypoints =
+          JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+        if (waypoints.length === 0) {
+          lista.innerHTML = "<p>No hay waypoints guardados.</p>";
+        } else {
+          waypoints.forEach(function (waypoint, indice) {
+            const elemento = document.createElement("div");
+
+            elemento.className = "waypointItem";
+
+            elemento.innerHTML =
+              "<strong>" +
+              waypoint.nombre +
+              "</strong><br>" +
+              waypoint.latitud.toFixed(6) +
+              "<br>" +
+              waypoint.longitud.toFixed(6);
+
+            elemento.addEventListener("click", function () {
+              mapa.setView([waypoint.latitud, waypoint.longitud], 16);
+
+              document.getElementById("panelWaypoints").style.display = "none";
+            });
+
+            lista.appendChild(elemento);
+          });
+        }
+
+        document.getElementById("panelWaypoints").style.display = "block";
+      }
     </script>
+    <div id="panelWaypoints">
+      <h3>Waypoints guardados</h3>
+
+      <div id="listaWaypoints"></div>
+
+      <button id="btnCerrarWaypoints">Cerrar</button>
+    </div>
   </body>
 </html>
