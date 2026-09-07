@@ -42,11 +42,27 @@
         background: white;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       }
+      #btnSeguirGPS {
+        position: absolute;
+        top: 65px;
+        left: 15px;
+        z-index: 1000;
+
+        padding: 12px 18px;
+        font-size: 16px;
+
+        border: none;
+        border-radius: 8px;
+
+        background: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
     </style>
   </head>
 
   <body>
     <button id="btnGPS">Mi posición</button>
+    <button id="btnSeguirGPS">Seguir GPS</button>
 
     <div id="mapa"></div>
 
@@ -72,7 +88,19 @@
       document
         .getElementById("btnGPS")
         .addEventListener("click", obtenerPosicion);
+      let seguirGPS = false;
 
+      document
+        .getElementById("btnSeguirGPS")
+        .addEventListener("click", function () {
+          seguirGPS = !seguirGPS;
+
+          if (seguirGPS) {
+            this.textContent = "No seguir GPS";
+          } else {
+            this.textContent = "Seguir GPS";
+          }
+        });
       let seguimientoGPS = null;
       let marcadorGPS = null;
 
@@ -97,9 +125,11 @@
 
             console.log("Latitud:", lat, "Longitud:", lon);
 
-            // Centrar mapa en la primera posición
-            mapa.setView([lat, lon], 16);
-
+            // Centrar el mapa solamente si está activado
+            // el seguimiento GPS
+            if (seguirGPS) {
+              mapa.setView([lat, lon], 16);
+            }
             // Crear el marcador solamente la primera vez
             if (marcadorGPS === null) {
               marcadorGPS = L.marker([lat, lon])
