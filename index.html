@@ -465,9 +465,10 @@
             // Centrar el mapa solamente si está activado
             // el seguimiento GPS
             if (seguirGPS) {
-              mapa.setView([lat, lon]);
-            }
-            // Crear el marcador solamente la primera vez
+              mapa.panTo([lat, lon], {
+                animate: false,
+              });
+            } // Crear el marcador solamente la primera vez
             if (marcadorGPS === null) {
               marcadorGPS = L.marker([lat, lon])
                 .addTo(mapa)
