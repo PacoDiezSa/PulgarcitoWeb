@@ -237,24 +237,35 @@
           )();
         }
 
-        const oscilador = audioDestino.createOscillator();
-        const ganancia = audioDestino.createGain();
+        function pitido() {
+          const oscilador = audioDestino.createOscillator();
+          const ganancia = audioDestino.createGain();
 
-        oscilador.type = "sine";
-        oscilador.frequency.value = 880;
+          oscilador.type = "sine";
+          oscilador.frequency.value = 880;
 
-        ganancia.gain.value = 0.2;
+          ganancia.gain.value = 0.2;
 
-        oscilador.connect(ganancia);
-        ganancia.connect(audioDestino.destination);
+          oscilador.connect(ganancia);
+          ganancia.connect(audioDestino.destination);
 
-        oscilador.start();
+          oscilador.start();
+
+          setTimeout(function () {
+            oscilador.stop();
+          }, 200);
+        }
+
+        pitido();
 
         setTimeout(function () {
-          oscilador.stop();
-        }, 300);
-      }
+          pitido();
+        }, 350);
 
+        setTimeout(function () {
+          pitido();
+        }, 700);
+      }
       document
         .getElementById("btnWaypoint")
         .addEventListener("click", function () {
@@ -428,6 +439,7 @@
           document.getElementById("infoDestino").style.display = "none";
           // Quitar el waypoint activo
           waypointActivo = null;
+          destinoAlcanzado = false;
         });
 
       function mostrarListaWaypoints() {
