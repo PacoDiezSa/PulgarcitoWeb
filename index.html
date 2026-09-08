@@ -359,6 +359,19 @@
           document.getElementById("panelWaypoints").style.display = "none";
         });
 
+      document
+        .getElementById("btnCancelarDestino")
+        .addEventListener("click", function () {
+          // Eliminar la línea del mapa
+          if (lineaAlWaypoint !== null) {
+            mapa.removeLayer(lineaAlWaypoint);
+            lineaAlWaypoint = null;
+          }
+
+          // Quitar el waypoint activo
+          waypointActivo = null;
+        });
+
       function mostrarListaWaypoints() {
         const lista = document.getElementById("listaWaypoints");
 
