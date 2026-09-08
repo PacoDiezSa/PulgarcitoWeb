@@ -151,6 +151,26 @@
 
         cursor: pointer;
       }
+
+      #infoDestino {
+        display: none;
+
+        position: absolute;
+        bottom: 15px;
+        left: 15px;
+        z-index: 1000;
+
+        width: 230px;
+
+        padding: 12px;
+
+        background: white;
+        border-radius: 8px;
+
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+        font-size: 15px;
+      }
     </style>
   </head>
 
@@ -160,6 +180,12 @@
     <button id="btnWaypoint">Crear waypoint</button>
     <button id="btnListaWaypoints">Waypoints</button>
     <button id="btnCancelarDestino">Cancelar destino</button>
+    <div id="infoDestino">
+      <strong>Destino</strong><br />
+      <span id="nombreDestino">Ninguno</span><br />
+      <span id="distanciaDestino">Distancia: --</span><br />
+      <span id="rumboDestino">Rumbo: --</span>
+    </div>
     <div id="mapa"></div>
 
     <div id="panelWaypoints">
@@ -444,6 +470,32 @@
               waypointActivo = waypoint;
 
               console.log("Waypoint activo:", waypoint.nombre);
+              document.getElementById("nombreDestino").textContent =
+                waypoint.nombre;
+
+              document.getElementById("infoDestino").style.display = "block";
+
+              if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
+                const distancia = calcularDistancia(
+                  ultimaLatitudGPS,
+                  ultimaLongitudGPS,
+                  waypoint.latitud,
+                  waypoint.longitud,
+                );
+
+                const rumbo = calcularRumbo(
+                  ultimaLatitudGPS,
+                  ultimaLongitudGPS,
+                  waypoint.latitud,
+                  waypoint.longitud,
+                );
+
+                document.getElementById("distanciaDestino").textContent =
+                  "Distancia: " + Math.round(distancia) + " m";
+
+                document.getElementById("rumboDestino").textContent =
+                  "Rumbo: " + Math.round(rumbo) + "°";
+              }
 
               // Centrar el mapa
               mapa.setView([waypoint.latitud, waypoint.longitud], 16);
