@@ -362,7 +362,6 @@
       document
         .getElementById("btnCancelarDestino")
         .addEventListener("click", function () {
-          // Eliminar la línea del mapa
           console.log("CANCELAR DESTINO");
           console.log("lineaAlWaypoint:", lineaAlWaypoint);
 
@@ -373,6 +372,8 @@
           } else {
             console.log("NO HAY línea para eliminar");
           }
+
+          waypointActivo = null;
 
           waypointActivo = null;
           // Quitar el waypoint activo
