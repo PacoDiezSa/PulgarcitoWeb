@@ -186,6 +186,23 @@
 
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       }
+
+      #nivelZoom {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        z-index: 1000;
+
+        padding: 8px 12px;
+
+        background: white;
+        border-radius: 6px;
+
+        font-size: 16px;
+        font-weight: bold;
+
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
     </style>
   </head>
 
@@ -216,6 +233,8 @@
       <h3>Waypoints guardados</h3>
 
       <div id="listaWaypoints"></div>
+
+      <div id="nivelZoom">Zoom: --</div>
 
       <button id="btnCerrarWaypoints">Cerrar</button>
     </div>
@@ -468,7 +487,8 @@
               mapa.panTo([lat, lon], {
                 animate: false,
               });
-            } // Crear el marcador solamente la primera vez
+            }
+            // Crear el marcador solamente la primera vez
             if (marcadorGPS === null) {
               marcadorGPS = L.marker([lat, lon])
                 .addTo(mapa)
