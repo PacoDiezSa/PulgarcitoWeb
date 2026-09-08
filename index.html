@@ -322,6 +322,49 @@
       document
         .getElementById("btnWaypoint")
         .addEventListener("click", function () {
+          if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
+            const lat = ultimaLatitudGPS;
+            const lon = ultimaLongitudGPS;
+
+            const nombre = prompt("Nombre del waypoint:", "");
+
+            if (nombre === null) {
+              return;
+            }
+
+            let nombreWaypoint = nombre.trim();
+
+            if (nombreWaypoint === "") {
+              nombreWaypoint = "Waypoint";
+            }
+
+            const waypoint = {
+              nombre: nombreWaypoint,
+              latitud: lat,
+              longitud: lon,
+            };
+
+            let waypoints =
+              JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+            waypoints.push(waypoint);
+
+            localStorage.setItem(
+              "pulgarcitoWaypoints",
+              JSON.stringify(waypoints),
+            );
+
+            if (marcadorWaypoint !== null) {
+              mapa.removeLayer(marcadorWaypoint);
+            }
+
+            marcadorWaypoint = L.marker([lat, lon])
+              .addTo(mapa)
+              .bindPopup(nombreWaypoint)
+              .openPopup();
+
+            return;
+          }
           crearWaypointActivo = !crearWaypointActivo;
 
           if (crearWaypointActivo) {
