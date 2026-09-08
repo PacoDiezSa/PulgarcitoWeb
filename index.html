@@ -171,6 +171,21 @@
 
         font-size: 15px;
       }
+      #btnCargarTrack {
+        position: absolute;
+        top: 265px;
+        left: 15px;
+        z-index: 1000;
+
+        padding: 12px 18px;
+        font-size: 16px;
+
+        background: white;
+        border: none;
+        border-radius: 8px;
+
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
     </style>
   </head>
 
@@ -180,6 +195,15 @@
     <button id="btnWaypoint">Crear waypoint</button>
     <button id="btnListaWaypoints">Waypoints</button>
     <button id="btnCancelarDestino">Cancelar destino</button>
+    <button id="btnCargarTrack">Cargar track</button>
+
+    <input
+      type="file"
+      id="inputTrack"
+      accept=".trk,.gpx"
+      style="display: none"
+    />
+
     <div id="infoDestino">
       <strong>Destino</strong><br />
       <span id="nombreDestino">Ninguno</span><br />
@@ -229,6 +253,7 @@
       let crearWaypointActivo = false;
       let destinoAlcanzado = false;
       let audioDestino = null;
+      let lineaTrack = null;
 
       function reproducirSonidoDestino() {
         if (audioDestino === null) {
@@ -335,6 +360,65 @@
       document
         .getElementById("btnGPS")
         .addEventListener("click", obtenerPosicion);
+      document
+        .getElementById("btnCargarTrack")
+        .addEventListener("click", function () {
+          document.getElementById("inputTrack").click();
+        });
+      document
+        .getElementById("inputTrack")
+        .addEventListener("change", function () {
+          const archivo = this.files[0];
+
+          if (!archivo) {
+            return;
+          }
+
+          console.log("Track seleccionado:", archivo.name);
+
+          const lector = new FileReader();
+
+          lector.onload = function () {
+            const lineas = lector.result.split(/\r?\n/);
+
+            const puntosTrack = [];
+
+            for (let i = 0; i < lineas.length - 1; i++) {
+              const lat = parseFloat(lineas[i].trim());
+              const lon = parseFloat(lineas[i + 1].trim());
+
+              if (
+                Number.isFinite(lat) &&
+                Number.isFinite(lon) &&
+                Math.abs(lat) <= 90 &&
+                Math.abs(lon) <= 180 &&
+                lineas[i].includes(".") &&
+                lineas[i + 1].includes(".")
+              ) {
+                puntosTrack.push([lat, lon]);
+                i++;
+              }
+            }
+
+            console.log("Puntos del track encontrados:", puntosTrack.length);
+
+            if (puntosTrack.length < 2) {
+              alert("No se han encontrado suficientes puntos en el track.");
+              return;
+            }
+
+            if (lineaTrack !== null) {
+              mapa.removeLayer(lineaTrack);
+            }
+
+            lineaTrack = L.polyline(puntosTrack, {
+              weight: 4,
+            }).addTo(mapa);
+
+            mapa.fitBounds(lineaTrack.getBounds());
+          };
+          lector.readAsText(archivo);
+        });
       let seguirGPS = false;
 
       document
