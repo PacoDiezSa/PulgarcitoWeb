@@ -245,7 +245,13 @@
     <script>
       // Crear mapa
       const mapa = L.map("mapa").setView([43.4623, -3.8099], 13);
+      document.getElementById("nivelZoom").textContent =
+        "Zoom: " + mapa.getZoom();
 
+      mapa.on("zoomend", function () {
+        document.getElementById("nivelZoom").textContent =
+          "Zoom: " + mapa.getZoom();
+      });
       // Mapa OpenStreetMap provisional
       // Ortofoto PNOA Máxima Actualidad del IGN
       L.tileLayer
