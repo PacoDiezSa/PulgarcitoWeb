@@ -90,7 +90,7 @@
 
       #btnCancelarDestino {
         position: absolute;
-        top: 215px;
+        top: 265px;
         left: 15px;
         z-index: 1000;
 
@@ -173,7 +173,7 @@
       }
       #btnCargarTrack {
         position: absolute;
-        top: 265px;
+        top: 315px;
         left: 15px;
         z-index: 1000;
 
@@ -205,7 +205,23 @@
       }
       #btnBorrarTrack {
         position: absolute;
-        top: 315px;
+        top: 365px;
+        left: 15px;
+        z-index: 1000;
+
+        padding: 12px 18px;
+        font-size: 16px;
+
+        background: white;
+        border: none;
+        border-radius: 8px;
+
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      #btnMostrarWaypoints {
+        position: absolute;
+        top: 215px;
         left: 15px;
         z-index: 1000;
 
@@ -226,6 +242,7 @@
     <button id="btnSeguirGPS">Seguir GPS</button>
     <button id="btnWaypoint">Crear waypoint</button>
     <button id="btnListaWaypoints">Waypoints</button>
+    <button id="btnMostrarWaypoints">Mostrar waypoints</button>
     <button id="btnCancelarDestino">Cancelar destino</button>
     <button id="btnCargarTrack">Cargar track</button>
     <button id="btnBorrarTrack">Borrar track</button>
@@ -286,11 +303,6 @@
       let waypoints =
         JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
 
-      for (const waypoint of waypoints) {
-        L.marker([waypoint.latitud, waypoint.longitud])
-          .addTo(mapa)
-          .bindPopup(waypoint.nombre);
-      }
       // Waypoint seleccionado en el mapa
       let marcadorWaypoint = null;
       let waypointActivo = null;
