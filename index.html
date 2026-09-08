@@ -227,6 +227,33 @@
       let marcadorWaypoint = null;
       let waypointActivo = null;
       let crearWaypointActivo = false;
+      let destinoAlcanzado = false;
+      let audioDestino = null;
+
+      function reproducirSonidoDestino() {
+        if (audioDestino === null) {
+          audioDestino = new (
+            window.AudioContext || window.webkitAudioContext
+          )();
+        }
+
+        const oscilador = audioDestino.createOscillator();
+        const ganancia = audioDestino.createGain();
+
+        oscilador.type = "sine";
+        oscilador.frequency.value = 880;
+
+        ganancia.gain.value = 0.2;
+
+        oscilador.connect(ganancia);
+        ganancia.connect(audioDestino.destination);
+
+        oscilador.start();
+
+        setTimeout(function () {
+          oscilador.stop();
+        }, 300);
+      }
 
       document
         .getElementById("btnWaypoint")
@@ -465,7 +492,7 @@
 
               // Guardar este waypoint como destino activo
               waypointActivo = waypoint;
-
+              destinoAlcanzado = false;
               console.log("Waypoint activo:", waypoint.nombre);
               document.getElementById("nombreDestino").textContent =
                 waypoint.nombre;
@@ -492,9 +519,13 @@
 
                 document.getElementById("rumboDestino").textContent =
                   "Rumbo: " + Math.round(rumbo) + "°";
-              }
+              } else {
+                document.getElementById("distanciaDestino").textContent =
+                  "Distancia: GPS no disponible";
 
-              // Centrar el mapa
+                document.getElementById("rumboDestino").textContent =
+                  "Rumbo: GPS no disponible";
+              } // Centrar el mapa
               mapa.setView([waypoint.latitud, waypoint.longitud], 16);
 
               // Cerrar la lista
@@ -615,6 +646,42 @@
           elemento.querySelector(".rumboWaypoint").textContent =
             "Rumbo: " + Math.round(rumbo) + "°";
         });
+        if (
+          waypointActivo !== null &&
+          ultimaLatitudGPS !== null &&
+          ultimaLongitudGPS !== null
+        ) {
+          const distanciaDestino = calcularDistancia(
+            ultimaLatitudGPS,
+            ultimaLongitudGPS,
+            waypointActivo.latitud,
+            waypointActivo.longitud,
+          );
+
+          const rumboDestino = calcularRumbo(
+            ultimaLatitudGPS,
+            ultimaLongitudGPS,
+            waypointActivo.latitud,
+            waypointActivo.longitud,
+          );
+
+          document.getElementById("distanciaDestino").textContent =
+            "Distancia: " + Math.round(distanciaDestino) + " m";
+
+          document.getElementById("rumboDestino").textContent =
+            "Rumbo: " + Math.round(rumboDestino) + "°";
+          if (distanciaDestino <= 20 && destinoAlcanzado === false) {
+            destinoAlcanzado = true;
+            if (distanciaDestino <= 20 && destinoAlcanzado === false) {
+              destinoAlcanzado = true;
+
+              reproducirSonidoDestino();
+
+              document.getElementById("distanciaDestino").textContent =
+                "DESTINO ALCANZADO";
+            }
+          }
+        }
       }
     </script>
   </body>
