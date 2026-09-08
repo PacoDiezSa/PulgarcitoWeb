@@ -507,34 +507,6 @@
             lista.appendChild(elemento);
 
             // Calcular distancia
-            if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
-              const distancia = calcularDistancia(
-                ultimaLatitudGPS,
-                ultimaLongitudGPS,
-                waypoint.latitud,
-                waypoint.longitud,
-              );
-
-              elemento.querySelector(".distanciaWaypoint").textContent =
-                "Distancia: " + Math.round(distancia) + " m";
-
-              // Calcular rumbo
-              const rumbo = calcularRumbo(
-                ultimaLatitudGPS,
-                ultimaLongitudGPS,
-                waypoint.latitud,
-                waypoint.longitud,
-              );
-
-              elemento.querySelector(".rumboWaypoint").textContent =
-                "Rumbo: " + Math.round(rumbo) + "°";
-            } else {
-              elemento.querySelector(".distanciaWaypoint").textContent =
-                "Distancia: GPS no disponible";
-
-              elemento.querySelector(".rumboWaypoint").textContent =
-                "Rumbo: GPS no disponible";
-            }
           });
         }
 
