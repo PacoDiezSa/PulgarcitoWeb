@@ -668,7 +668,13 @@
             } catch (error) {
               console.log("Error al guardar el track:", error);
 
-              alert("No se ha podido guardar el track.");
+              alert(
+                "No se ha podido guardar el track.\n\n" +
+                  "Error: " +
+                  error.name +
+                  "\n" +
+                  error.message,
+              );
             }
           }
         });
