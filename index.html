@@ -729,6 +729,14 @@
               // Guardar este waypoint como destino activo
               waypointActivo = waypoint;
               destinoAlcanzado = false;
+              if (marcadorWaypoint !== null) {
+                mapa.removeLayer(marcadorWaypoint);
+              }
+
+              marcadorWaypoint = L.marker([waypoint.latitud, waypoint.longitud])
+                .addTo(mapa)
+                .bindPopup(waypoint.nombre)
+                .openPopup();
               console.log("Waypoint activo:", waypoint.nombre);
               document.getElementById("nombreDestino").textContent =
                 waypoint.nombre;
