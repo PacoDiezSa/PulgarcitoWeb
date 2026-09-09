@@ -261,6 +261,7 @@
       <button id="btnListaWaypoints">Waypoints</button>
       <button id="btnMostrarWaypoints">Mostrar waypoints</button>
       <button id="btnCancelarDestino">Cancelar destino</button>
+      <button id="btnGrabarTrack">Grabar track</button>
       <button id="btnCargarTrack">Cargar track</button>
       <button id="btnBorrarTrack">Borrar track</button>
     </div>
@@ -319,6 +320,9 @@
       let destinoAlcanzado = false;
       let audioDestino = null;
       let lineaTrack = null;
+      let grabandoTrack = false;
+      let puntosTrackGrabado = [];
+      let lineaTrackGrabado = null;
       let mostrarTodosWaypoints = false;
       let marcadoresWaypoints = [];
 
@@ -584,6 +588,60 @@
           }
         });
 
+      document
+        .getElementById("btnGrabarTrack")
+        .addEventListener("click", function () {
+          if (grabandoTrack === false) {
+            grabandoTrack = true;
+            puntosTrackGrabado = [];
+
+            if (lineaTrackGrabado !== null) {
+              mapa.removeLayer(lineaTrackGrabado);
+              lineaTrackGrabado = null;
+            }
+            this.textContent = "Parar track";
+            this.classList.add("activo");
+
+            alert("Grabación de track iniciada");
+          } else {
+            grabandoTrack = false;
+
+            this.textContent = "Grabar track";
+            this.classList.remove("activo");
+
+            if (puntosTrackGrabado.length < 2) {
+              alert("No hay suficientes puntos para guardar el track.");
+              return;
+            }
+
+            const nombre = prompt("Nombre del track:", "");
+
+            if (nombre === null) {
+              return;
+            }
+
+            let nombreTrack = nombre.trim();
+
+            if (nombreTrack === "") {
+              nombreTrack = "Track";
+            }
+
+            const tracks =
+              JSON.parse(localStorage.getItem("pulgarcitoTracks")) || [];
+
+            const track = {
+              nombre: nombreTrack,
+              puntos: puntosTrackGrabado,
+            };
+
+            tracks.push(track);
+
+            localStorage.setItem("pulgarcitoTracks", JSON.stringify(tracks));
+
+            alert("Track guardado: " + nombreTrack);
+          }
+        });
+
       let seguimientoGPS = null;
       let marcadorGPS = null;
       let lineaAlWaypoint = null;
@@ -593,6 +651,15 @@
 
       // Obtener posición y comenzar seguimiento
       function obtenerPosicion() {
+        if (audioDestino === null) {
+          audioDestino = new (
+            window.AudioContext || window.webkitAudioContext
+          )();
+        }
+
+        if (audioDestino.state === "suspended") {
+          audioDestino.resume();
+        }
         if (!navigator.geolocation) {
           alert("Este dispositivo no permite obtener la posición GPS.");
 
@@ -615,7 +682,17 @@
 
             console.log("Latitud:", lat, "Longitud:", lon);
 
-            // Centrar el mapa solamente si está activado
+            if (grabandoTrack) {
+              puntosTrackGrabado.push([lat, lon]);
+
+              if (lineaTrackGrabado === null) {
+                lineaTrackGrabado = L.polyline(puntosTrackGrabado, {
+                  weight: 4,
+                }).addTo(mapa);
+              } else {
+                lineaTrackGrabado.setLatLngs(puntosTrackGrabado);
+              }
+            } // Centrar el mapa solamente si está activado
             // el seguimiento GPS
             if (marcadorGPS === null || seguirGPS) {
               mapa.panTo([lat, lon], {
