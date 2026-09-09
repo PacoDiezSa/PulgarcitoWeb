@@ -601,11 +601,31 @@
             }
 
             try {
-              carpetaTrackHandle = await window.showDirectoryPicker();
+              carpetaTrackHandle = await window.showDirectoryPicker({
+                mode: "readwrite",
+              });
+
+              const permiso = await carpetaTrackHandle.requestPermission({
+                mode: "readwrite",
+              });
+
+              if (permiso !== "granted") {
+                alert("No se ha concedido permiso para guardar el track.");
+                return;
+              }
             } catch (error) {
+              console.log("Error al seleccionar la carpeta:", error);
+
+              alert(
+                "No se ha podido acceder a la carpeta.\n\n" +
+                  "Error: " +
+                  error.name +
+                  "\n" +
+                  error.message,
+              );
+
               return;
             }
-
             grabandoTrack = true;
             puntosTrackGrabado = [];
 
