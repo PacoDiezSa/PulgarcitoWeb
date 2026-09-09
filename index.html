@@ -323,6 +323,7 @@
       let grabandoTrack = false;
       let puntosTrackGrabado = [];
       let lineaTrackGrabado = null;
+      let carpetaTrackHandle = null;
       let mostrarTodosWaypoints = false;
       let marcadoresWaypoints = [];
 
@@ -364,7 +365,7 @@
       }
       document
         .getElementById("btnWaypoint")
-        .addEventListener("click", function () {
+        .addEventListener("click", async function () {
           if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
             const lat = ultimaLatitudGPS;
             const lon = ultimaLongitudGPS;
@@ -590,8 +591,21 @@
 
       document
         .getElementById("btnGrabarTrack")
-        .addEventListener("click", function () {
+        .addEventListener("click", async function () {
           if (grabandoTrack === false) {
+            if (!window.showDirectoryPicker) {
+              alert(
+                "Este navegador no permite seleccionar una carpeta directamente.",
+              );
+              return;
+            }
+
+            try {
+              carpetaTrackHandle = await window.showDirectoryPicker();
+            } catch (error) {
+              return;
+            }
+
             grabandoTrack = true;
             puntosTrackGrabado = [];
 
@@ -626,19 +640,36 @@
               nombreTrack = "Track";
             }
 
-            const tracks =
-              JSON.parse(localStorage.getItem("pulgarcitoTracks")) || [];
+            let contenidoTrack = "";
 
-            const track = {
-              nombre: nombreTrack,
-              puntos: puntosTrackGrabado,
-            };
+            puntosTrackGrabado.forEach(function (punto) {
+              for (let i = 0; i < 11; i++) {
+                contenidoTrack += punto[i] + "\n";
+              }
+            });
 
-            tracks.push(track);
+            const nombreArchivo = nombreTrack + ".trk";
 
-            localStorage.setItem("pulgarcitoTracks", JSON.stringify(tracks));
+            try {
+              const archivo = await carpetaTrackHandle.getFileHandle(
+                nombreArchivo,
+                { create: true },
+              );
 
-            alert("Track guardado: " + nombreTrack);
+              const escritor = await archivo.createWritable();
+
+              await escritor.write(contenidoTrack);
+
+              await escritor.close();
+
+              alert(
+                "Track guardado en la carpeta seleccionada:\n" + nombreArchivo,
+              );
+            } catch (error) {
+              console.log("Error al guardar el track:", error);
+
+              alert("No se ha podido guardar el track.");
+            }
           }
         });
 
@@ -683,8 +714,41 @@
             console.log("Latitud:", lat, "Longitud:", lon);
 
             if (grabandoTrack) {
-              puntosTrackGrabado.push([lat, lon]);
+              const ahora = new Date();
 
+              const año = ahora.getFullYear();
+              const mes = ahora.getMonth() + 1;
+              const dia = ahora.getDate();
+              const hora = ahora.getHours();
+              const minuto = ahora.getMinutes();
+              const segundo = ahora.getSeconds();
+
+              const bearing =
+                posicion.coords.heading !== null ? posicion.coords.heading : 0;
+
+              const speed =
+                posicion.coords.speed !== null ? posicion.coords.speed : 0;
+
+              const altitude =
+                posicion.coords.altitude !== null
+                  ? posicion.coords.altitude
+                  : 0;
+
+              const punto = [
+                lat,
+                lon,
+                año,
+                mes,
+                dia,
+                hora,
+                minuto,
+                segundo,
+                bearing,
+                speed,
+                altitude,
+              ];
+
+              puntosTrackGrabado.push(punto);
               if (lineaTrackGrabado === null) {
                 lineaTrackGrabado = L.polyline(puntosTrackGrabado, {
                   weight: 4,
