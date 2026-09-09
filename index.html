@@ -552,6 +552,7 @@
 
       let ultimaLatitudGPS = null;
       let ultimaLongitudGPS = null;
+
       // Obtener posición y comenzar seguimiento
       function obtenerPosicion() {
         if (!navigator.geolocation) {
@@ -578,11 +579,12 @@
 
             // Centrar el mapa solamente si está activado
             // el seguimiento GPS
-            if (seguirGPS) {
+            if (marcadorGPS === null || seguirGPS) {
               mapa.panTo([lat, lon], {
                 animate: false,
               });
             }
+
             // Crear el marcador solamente la primera vez
             if (marcadorGPS === null) {
               marcadorGPS = L.marker([lat, lon])
