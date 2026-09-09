@@ -247,8 +247,8 @@
         display: none;
       }
       #barraBotones button.activo {
-        background: #4caf50;
-        color: white;
+        background: #4caf50 !important;
+        color: white !important;
       }
     </style>
   </head>
@@ -319,6 +319,8 @@
       let destinoAlcanzado = false;
       let audioDestino = null;
       let lineaTrack = null;
+      let mostrarTodosWaypoints = false;
+      let marcadoresWaypoints = [];
 
       function reproducirSonidoDestino() {
         if (audioDestino === null) {
@@ -546,10 +548,42 @@
 
           if (seguirGPS) {
             this.textContent = "No seguir GPS";
+            this.classList.add("activo");
           } else {
             this.textContent = "Seguir GPS";
+            this.classList.remove("activo");
           }
         });
+
+      document
+        .getElementById("btnMostrarWaypoints")
+        .addEventListener("click", function () {
+          mostrarTodosWaypoints = !mostrarTodosWaypoints;
+
+          const waypoints =
+            JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+          if (mostrarTodosWaypoints) {
+            this.classList.add("activo");
+
+            waypoints.forEach(function (waypoint) {
+              const marcador = L.marker([waypoint.latitud, waypoint.longitud])
+                .addTo(mapa)
+                .bindPopup(waypoint.nombre);
+
+              marcadoresWaypoints.push(marcador);
+            });
+          } else {
+            this.classList.remove("activo");
+
+            marcadoresWaypoints.forEach(function (marcador) {
+              mapa.removeLayer(marcador);
+            });
+
+            marcadoresWaypoints = [];
+          }
+        });
+
       let seguimientoGPS = null;
       let marcadorGPS = null;
       let lineaAlWaypoint = null;
