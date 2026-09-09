@@ -293,640 +293,766 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-      // Crear mapa
-      const mapa = L.map("mapa", {
-        maxZoom: 22,
-      }).setView([43.4623, -3.8099], 13);
-      // Mapa OpenStreetMap provisional
-      // Ortofoto PNOA Máxima Actualidad del IGN
-      L.tileLayer
-        .wms("https://www.ign.es/wms-inspire/pnoa-ma", {
-          layers: "OI.OrthoimageCoverage",
-          format: "image/jpeg",
-          transparent: false,
-          version: "1.3.0",
-          maxZoom: 22,
-          attribution: "PNOA © Instituto Geográfico Nacional",
-        })
-        .addTo(mapa);
-      // Recuperar waypoints guardados
-      let waypoints =
-        JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
-
-      // Waypoint seleccionado en el mapa
-      let marcadorWaypoint = null;
-      let waypointActivo = null;
-      let crearWaypointActivo = false;
-      let destinoAlcanzado = false;
-      let audioDestino = null;
-      let lineaTrack = null;
-      let grabandoTrack = false;
-      let puntosTrackGrabado = [];
-      let lineaTrackGrabado = null;
-      let carpetaTrackHandle = null;
-      let mostrarTodosWaypoints = false;
-      let marcadoresWaypoints = [];
-
-      function reproducirSonidoDestino() {
-        if (audioDestino === null) {
-          audioDestino = new (
-            window.AudioContext || window.webkitAudioContext
-          )();
-        }
-
-        function pitido() {
-          const oscilador = audioDestino.createOscillator();
-          const ganancia = audioDestino.createGain();
-
-          oscilador.type = "sine";
-          oscilador.frequency.value = 880;
-
-          ganancia.gain.value = 0.2;
-
-          oscilador.connect(ganancia);
-          ganancia.connect(audioDestino.destination);
-
-          oscilador.start();
-
-          setTimeout(function () {
-            oscilador.stop();
-          }, 200);
-        }
-
-        pitido();
-
-        setTimeout(function () {
-          pitido();
-        }, 350);
-
-        setTimeout(function () {
-          pitido();
-        }, 700);
-      }
-      document
-        .getElementById("btnWaypoint")
-        .addEventListener("click", async function () {
-          if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
-            const lat = ultimaLatitudGPS;
-            const lon = ultimaLongitudGPS;
-
-            const nombre = prompt("Nombre del waypoint:", "");
-
-            if (nombre === null) {
-              return;
-            }
-
-            let nombreWaypoint = nombre.trim();
-
-            if (nombreWaypoint === "") {
-              nombreWaypoint = "Waypoint";
-            }
-
-            const waypoint = {
-              nombre: nombreWaypoint,
-              latitud: lat,
-              longitud: lon,
-            };
-
+            // Crear mapa
+            const mapa = L.map("mapa", {
+              maxZoom: 22,
+            }).setView([43.4623, -3.8099], 13);
+            // Mapa OpenStreetMap provisional
+            // Ortofoto PNOA Máxima Actualidad del IGN
+            L.tileLayer
+              .wms("https://www.ign.es/wms-inspire/pnoa-ma", {
+                layers: "OI.OrthoimageCoverage",
+                format: "image/jpeg",
+                transparent: false,
+                version: "1.3.0",
+                maxZoom: 22,
+                attribution: "PNOA © Instituto Geográfico Nacional",
+              })
+              .addTo(mapa);
+            // Recuperar waypoints guardados
             let waypoints =
               JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
 
-            waypoints.push(waypoint);
+            // Waypoint seleccionado en el mapa
+            let marcadorWaypoint = null;
+            let waypointActivo = null;
+            let crearWaypointActivo = false;
+            let destinoAlcanzado = false;
+            let audioDestino = null;
+            let lineaTrack = null;
+            let grabandoTrack = false;
+            let puntosTrackGrabado = [];
+            let lineaTrackGrabado = null;
+            let carpetaTrackHandle = null;
+            let mostrarTodosWaypoints = false;
+            let marcadoresWaypoints = [];
 
-            localStorage.setItem(
-              "pulgarcitoWaypoints",
-              JSON.stringify(waypoints),
-            );
-
-            if (marcadorWaypoint !== null) {
-              mapa.removeLayer(marcadorWaypoint);
-            }
-
-            marcadorWaypoint = L.marker([lat, lon])
-              .addTo(mapa)
-              .bindPopup(nombreWaypoint)
-              .openPopup();
-
-            return;
-          }
-          crearWaypointActivo = !crearWaypointActivo;
-
-          if (crearWaypointActivo) {
-            this.textContent = "Cancelar waypoint";
-          } else {
-            this.textContent = "Crear waypoint";
-          }
-        });
-      mapa.on("click", function (e) {
-        if (crearWaypointActivo === false) {
-          return;
-        }
-        const lat = e.latlng.lat;
-        const lon = e.latlng.lng;
-
-        console.log("Waypoint:", lat, lon);
-
-        // Pedir el nombre del waypoint
-        const nombre = prompt("Nombre del waypoint:", "");
-
-        // Si se pulsa Cancelar, no crear el waypoint
-        if (nombre === null) {
-          return;
-        }
-
-        // Si se deja vacío, utilizar un nombre genérico
-        let nombreWaypoint = nombre.trim();
-
-        if (nombreWaypoint === "") {
-          nombreWaypoint = "Waypoint";
-        }
-
-        // Crear objeto del waypoint
-        const waypoint = {
-          nombre: nombreWaypoint,
-          latitud: lat,
-          longitud: lon,
-        };
-
-        // Leer los waypoints que ya estaban guardados
-        let waypoints =
-          JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
-
-        // Añadir el nuevo waypoint
-        waypoints.push(waypoint);
-
-        // Guardar todos los waypoints
-        localStorage.setItem("pulgarcitoWaypoints", JSON.stringify(waypoints));
-
-        console.log("Waypoint guardado:", waypoint);
-
-        // Si ya había un waypoint mostrado, quitarlo
-        if (marcadorWaypoint !== null) {
-          mapa.removeLayer(marcadorWaypoint);
-        }
-
-        // Crear el marcador
-        marcadorWaypoint = L.marker([lat, lon])
-          .addTo(mapa)
-          .bindPopup(nombreWaypoint)
-          .openPopup();
-      });
-      // Botón GPS
-      document
-        .getElementById("btnGPS")
-        .addEventListener("click", obtenerPosicion);
-      document
-        .getElementById("btnCargarTrack")
-        .addEventListener("click", function () {
-          document.getElementById("inputTrack").click();
-        });
-
-      document
-        .getElementById("btnBorrarTrack")
-        .addEventListener("click", function () {
-          if (lineaTrack !== null) {
-            mapa.removeLayer(lineaTrack);
-            lineaTrack = null;
-          }
-        });
-
-      document
-        .getElementById("inputTrack")
-        .addEventListener("change", function () {
-          const archivo = this.files[0];
-
-          if (!archivo) {
-            return;
-          }
-
-          console.log("Track seleccionado:", archivo.name);
-
-          const lector = new FileReader();
-
-          lector.onload = function () {
-            const lineas = lector.result.split(/\r?\n/);
-
-            const puntosTrack = [];
-
-            for (let i = 0; i < lineas.length - 1; i++) {
-              const lat = parseFloat(lineas[i].trim());
-              const lon = parseFloat(lineas[i + 1].trim());
-
-              if (
-                Number.isFinite(lat) &&
-                Number.isFinite(lon) &&
-                Math.abs(lat) <= 90 &&
-                Math.abs(lon) <= 180 &&
-                lineas[i].includes(".") &&
-                lineas[i + 1].includes(".")
-              ) {
-                puntosTrack.push([lat, lon]);
-                i++;
+            function reproducirSonidoDestino() {
+              if (audioDestino === null) {
+                audioDestino = new (
+                  window.AudioContext || window.webkitAudioContext
+                )();
               }
-            }
 
-            console.log("Puntos del track encontrados:", puntosTrack.length);
+              function pitido() {
+                const oscilador = audioDestino.createOscillator();
+                const ganancia = audioDestino.createGain();
 
-            if (puntosTrack.length < 2) {
-              alert("No se han encontrado suficientes puntos en el track.");
-              return;
-            }
+                oscilador.type = "sine";
+                oscilador.frequency.value = 880;
 
-            if (lineaTrack !== null) {
-              mapa.removeLayer(lineaTrack);
-            }
+                ganancia.gain.value = 0.2;
 
-            lineaTrack = L.polyline(puntosTrack, {
-              weight: 4,
-            }).addTo(mapa);
+                oscilador.connect(ganancia);
+                ganancia.connect(audioDestino.destination);
 
-            mapa.fitBounds(lineaTrack.getBounds());
-          };
-          lector.readAsText(archivo);
-        });
-      let seguirGPS = false;
+                oscilador.start();
 
-      document
-        .getElementById("btnSeguirGPS")
-        .addEventListener("click", function () {
-          seguirGPS = !seguirGPS;
-
-          if (seguirGPS) {
-            this.textContent = "No seguir GPS";
-            this.classList.add("activo");
-          } else {
-            this.textContent = "Seguir GPS";
-            this.classList.remove("activo");
-          }
-        });
-
-      document
-        .getElementById("btnMostrarWaypoints")
-        .addEventListener("click", function () {
-          mostrarTodosWaypoints = !mostrarTodosWaypoints;
-
-          const waypoints =
-            JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
-
-          if (mostrarTodosWaypoints) {
-            this.classList.add("activo");
-
-            waypoints.forEach(function (waypoint) {
-              const marcador = L.marker([waypoint.latitud, waypoint.longitud])
-                .addTo(mapa)
-                .bindPopup(waypoint.nombre);
-
-              marcadoresWaypoints.push(marcador);
-            });
-          } else {
-            this.classList.remove("activo");
-
-            marcadoresWaypoints.forEach(function (marcador) {
-              mapa.removeLayer(marcador);
-            });
-
-            marcadoresWaypoints = [];
-          }
-        });
-
-      document
-        .getElementById("btnGrabarTrack")
-        .addEventListener("click", async function () {
-          if (grabandoTrack === false) {
-            if (!window.showDirectoryPicker) {
-              alert(
-                "Este navegador no permite seleccionar una carpeta directamente.",
-              );
-              return;
-            }
-
-            try {
-              carpetaTrackHandle = await window.showDirectoryPicker({
-                mode: "readwrite",
-              });
-
-              const permiso = await carpetaTrackHandle.requestPermission({
-                mode: "readwrite",
-              });
-
-              if (permiso !== "granted") {
-                alert("No se ha concedido permiso para guardar el track.");
-                return;
+                setTimeout(function () {
+                  oscilador.stop();
+                }, 200);
               }
-            } catch (error) {
-              console.log("Error al seleccionar la carpeta:", error);
 
-              alert(
-                "No se ha podido acceder a la carpeta.\n\n" +
-                  "Error: " +
-                  error.name +
-                  "\n" +
-                  error.message,
-              );
+              pitido();
 
-              return;
+              setTimeout(function () {
+                pitido();
+              }, 350);
+
+              setTimeout(function () {
+                pitido();
+              }, 700);
             }
-            grabandoTrack = true;
-            puntosTrackGrabado = [];
+            document
+              .getElementById("btnWaypoint")
+              .addEventListener("click", async function () {
+                if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
+                  const lat = ultimaLatitudGPS;
+                  const lon = ultimaLongitudGPS;
 
-            if (lineaTrackGrabado !== null) {
-              mapa.removeLayer(lineaTrackGrabado);
-              lineaTrackGrabado = null;
-            }
-            this.textContent = "Parar track";
-            this.classList.add("activo");
+                  const nombre = prompt("Nombre del waypoint:", "");
 
-            alert("Grabación de track iniciada");
-          } else {
-            grabandoTrack = false;
+                  if (nombre === null) {
+                    return;
+                  }
 
-            this.textContent = "Grabar track";
-            this.classList.remove("activo");
+                  let nombreWaypoint = nombre.trim();
 
-            if (puntosTrackGrabado.length < 2) {
-              alert("No hay suficientes puntos para guardar el track.");
-              return;
-            }
+                  if (nombreWaypoint === "") {
+                    nombreWaypoint = "Waypoint";
+                  }
 
-            const nombre = prompt("Nombre del track:", "");
+                  const waypoint = {
+                    nombre: nombreWaypoint,
+                    latitud: lat,
+                    longitud: lon,
+                  };
 
-            if (nombre === null) {
-              return;
-            }
+                  let waypoints =
+                    JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
 
-            let nombreTrack = nombre.trim();
+                  waypoints.push(waypoint);
 
-            if (nombreTrack === "") {
-              nombreTrack = "Track";
-            }
+                  localStorage.setItem(
+                    "pulgarcitoWaypoints",
+                    JSON.stringify(waypoints),
+                  );
 
-            let contenidoTrack = "";
+                  if (marcadorWaypoint !== null) {
+                    mapa.removeLayer(marcadorWaypoint);
+                  }
 
-            puntosTrackGrabado.forEach(function (punto) {
-              for (let i = 0; i < 11; i++) {
-                contenidoTrack += punto[i] + "\n";
-              }
-            });
+                  marcadorWaypoint = L.marker([lat, lon])
+                    .addTo(mapa)
+                    .bindPopup(nombreWaypoint)
+                    .openPopup();
 
-            const nombreArchivo = nombreTrack + ".trk";
-
-            try {
-              const archivo = await carpetaTrackHandle.getFileHandle(
-                nombreArchivo,
-                { create: true },
-              );
-
-              const escritor = await archivo.createWritable();
-
-              await escritor.write(contenidoTrack);
-
-              await escritor.close();
-
-              alert(
-                "Track guardado en la carpeta seleccionada:\n" + nombreArchivo,
-              );
-            } catch (error) {
-              console.log("Error al guardar el track:", error);
-
-              alert(
-                "No se ha podido guardar el track.\n\n" +
-                  "Error: " +
-                  error.name +
-                  "\n" +
-                  error.message,
-              );
-            }
-          }
-        });
-
-      let seguimientoGPS = null;
-      let marcadorGPS = null;
-      let lineaAlWaypoint = null;
-
-      let ultimaLatitudGPS = null;
-      let ultimaLongitudGPS = null;
-
-      // Obtener posición y comenzar seguimiento
-      function obtenerPosicion() {
-        if (audioDestino === null) {
-          audioDestino = new (
-            window.AudioContext || window.webkitAudioContext
-          )();
-        }
-
-        if (audioDestino.state === "suspended") {
-          audioDestino.resume();
-        }
-        if (!navigator.geolocation) {
-          alert("Este dispositivo no permite obtener la posición GPS.");
-
-          return;
-        }
-
-        // Si ya estaba activo, no iniciar otro seguimiento
-        if (seguimientoGPS !== null) {
-          return;
-        }
-
-        seguimientoGPS = navigator.geolocation.watchPosition(
-          function (posicion) {
-            const lat = posicion.coords.latitude;
-
-            const lon = posicion.coords.longitude;
-
-            ultimaLatitudGPS = lat;
-            ultimaLongitudGPS = lon;
-
-            console.log("Latitud:", lat, "Longitud:", lon);
-
-            if (grabandoTrack) {
-              const ahora = new Date();
-
-              const año = ahora.getFullYear();
-              const mes = ahora.getMonth() + 1;
-              const dia = ahora.getDate();
-              const hora = ahora.getHours();
-              const minuto = ahora.getMinutes();
-              const segundo = ahora.getSeconds();
-
-              const bearing =
-                posicion.coords.heading !== null ? posicion.coords.heading : 0;
-
-              const speed =
-                posicion.coords.speed !== null ? posicion.coords.speed : 0;
-
-              const altitude =
-                posicion.coords.altitude !== null
-                  ? posicion.coords.altitude
-                  : 0;
-
-              const punto = [
-                lat,
-                lon,
-                año,
-                mes,
-                dia,
-                hora,
-                minuto,
-                segundo,
-                bearing,
-                speed,
-                altitude,
-              ];
-
-              puntosTrackGrabado.push(punto);
-              if (lineaTrackGrabado === null) {
-                lineaTrackGrabado = L.polyline(puntosTrackGrabado, {
-                  weight: 4,
-                }).addTo(mapa);
-              } else {
-                lineaTrackGrabado.setLatLngs(puntosTrackGrabado);
-              }
-            } // Centrar el mapa solamente si está activado
-            // el seguimiento GPS
-            if (marcadorGPS === null || seguirGPS) {
-              mapa.panTo([lat, lon], {
-                animate: false,
-              });
-            }
-
-            // Crear el marcador solamente la primera vez
-            if (marcadorGPS === null) {
-              marcadorGPS = L.marker([lat, lon])
-                .addTo(mapa)
-                .bindPopup("Mi posición");
-            } else {
-              // En las siguientes lecturas,
-              // solamente mover el marcador
-              marcadorGPS.setLatLng([lat, lon]);
-            }
-            // Actualizar la línea hacia el waypoint activo
-            actualizarLineaAlWaypoint();
-            actualizarDistanciasYRumbos();
-          },
-
-          function (error) {
-            alert("No se ha podido obtener la posición GPS.");
-
-            console.log(error);
-
-            seguimientoGPS = null;
-          },
-
-          {
-            enableHighAccuracy: true,
-            maximumAge: 5000,
-            timeout: 10000,
-          },
-        );
-      }
-      document
-        .getElementById("btnListaWaypoints")
-        .addEventListener("click", mostrarListaWaypoints);
-
-      document
-        .getElementById("btnCerrarWaypoints")
-        .addEventListener("click", function () {
-          document.getElementById("panelWaypoints").style.display = "none";
-        });
-
-      document
-        .getElementById("btnCancelarDestino")
-        .addEventListener("click", function () {
-          console.log("CANCELAR DESTINO");
-          console.log("lineaAlWaypoint:", lineaAlWaypoint);
-
-          if (lineaAlWaypoint !== null) {
-            mapa.removeLayer(lineaAlWaypoint);
-            lineaAlWaypoint = null;
-            console.log("Línea eliminada");
-          } else {
-            console.log("NO HAY línea para eliminar");
-          }
-          document.getElementById("infoDestino").style.display = "none";
-          // Quitar el waypoint activo
-          waypointActivo = null;
-          destinoAlcanzado = false;
-        });
-
-      function mostrarListaWaypoints() {
-        const lista = document.getElementById("listaWaypoints");
-
-        lista.innerHTML = "";
-
-        const waypoints =
-          JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
-
-        if (waypoints.length === 0) {
-          lista.innerHTML = "<p>No hay waypoints guardados.</p>";
-        } else {
-          waypoints.forEach(function (waypoint, indice) {
-            const elemento = document.createElement("div");
-
-            elemento.className = "waypointItem";
-
-            elemento.innerHTML =
-              "<strong>" +
-              waypoint.nombre +
-              "</strong><br>" +
-              waypoint.latitud.toFixed(6) +
-              "<br>" +
-              waypoint.longitud.toFixed(6) +
-              "<br>" +
-              '<span class="distanciaWaypoint">' +
-              "Distancia: calculando..." +
-              "</span>" +
-              "<br>" +
-              '<span class="rumboWaypoint">' +
-              "Rumbo: calculando..." +
-              "</span>" +
-              "<br>" +
-              '<button class="btnBorrarWaypoint">' +
-              "Borrar" +
-              "</button>";
-
-            elemento.addEventListener("click", function (evento) {
-              if (evento.target.classList.contains("btnBorrarWaypoint")) {
-                const confirmar = confirm(
-                  '¿Desea borrar el waypoint "' + waypoint.nombre + '"?',
-                );
-
-                if (confirmar === false) {
                   return;
                 }
+                crearWaypointActivo = !crearWaypointActivo;
 
-                waypoints.splice(indice, 1);
+                if (crearWaypointActivo) {
+                  this.textContent = "Cancelar waypoint";
+                } else {
+                  this.textContent = "Crear waypoint";
+                }
+              });
+            mapa.on("click", function (e) {
+              if (crearWaypointActivo === false) {
+                return;
+              }
+              const lat = e.latlng.lat;
+              const lon = e.latlng.lng;
 
-                localStorage.setItem(
-                  "pulgarcitoWaypoints",
-                  JSON.stringify(waypoints),
-                );
+              console.log("Waypoint:", lat, lon);
 
-                mapa.closePopup();
+              // Pedir el nombre del waypoint
+              const nombre = prompt("Nombre del waypoint:", "");
 
-                location.reload();
-
+              // Si se pulsa Cancelar, no crear el waypoint
+              if (nombre === null) {
                 return;
               }
 
-              // Guardar este waypoint como destino activo
-              waypointActivo = waypoint;
-              destinoAlcanzado = false;
+              // Si se deja vacío, utilizar un nombre genérico
+              let nombreWaypoint = nombre.trim();
+
+              if (nombreWaypoint === "") {
+                nombreWaypoint = "Waypoint";
+              }
+
+              // Crear objeto del waypoint
+              const waypoint = {
+                nombre: nombreWaypoint,
+                latitud: lat,
+                longitud: lon,
+              };
+
+              // Leer los waypoints que ya estaban guardados
+              let waypoints =
+                JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+              // Añadir el nuevo waypoint
+              waypoints.push(waypoint);
+
+              // Guardar todos los waypoints
+              localStorage.setItem("pulgarcitoWaypoints", JSON.stringify(waypoints));
+
+              console.log("Waypoint guardado:", waypoint);
+
+              // Si ya había un waypoint mostrado, quitarlo
               if (marcadorWaypoint !== null) {
                 mapa.removeLayer(marcadorWaypoint);
               }
 
-              marcadorWaypoint = L.marker([waypoint.latitud, waypoint.longitud])
+              // Crear el marcador
+              marcadorWaypoint = L.marker([lat, lon])
                 .addTo(mapa)
-                .bindPopup(waypoint.nombre)
+                .bindPopup(nombreWaypoint)
                 .openPopup();
-              console.log("Waypoint activo:", waypoint.nombre);
-              document.getElementById("nombreDestino").textContent =
-                waypoint.nombre;
+            });
+            // Botón GPS
+            document
+              .getElementById("btnGPS")
+              .addEventListener("click", obtenerPosicion);
+            document
+              .getElementById("btnCargarTrack")
+              .addEventListener("click", function () {
+                document.getElementById("inputTrack").click();
+              });
 
-              document.getElementById("infoDestino").style.display = "block";
+            document
+              .getElementById("btnBorrarTrack")
+              .addEventListener("click", function () {
+                if (lineaTrack !== null) {
+                  mapa.removeLayer(lineaTrack);
+                  lineaTrack = null;
+                }
+              });
 
-              if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
+            document
+              .getElementById("inputTrack")
+              .addEventListener("change", function () {
+                const archivo = this.files[0];
+
+                if (!archivo) {
+                  return;
+                }
+
+                console.log("Track seleccionado:", archivo.name);
+
+                const lector = new FileReader();
+
+                lector.onload = function () {
+                  const lineas = lector.result.split(/\r?\n/);
+
+                  const puntosTrack = [];
+
+                  for (let i = 0; i < lineas.length - 1; i++) {
+                    const lat = parseFloat(lineas[i].trim());
+                    const lon = parseFloat(lineas[i + 1].trim());
+
+                    if (
+                      Number.isFinite(lat) &&
+                      Number.isFinite(lon) &&
+                      Math.abs(lat) <= 90 &&
+                      Math.abs(lon) <= 180 &&
+                      lineas[i].includes(".") &&
+                      lineas[i + 1].includes(".")
+                    ) {
+                      puntosTrack.push([lat, lon]);
+                      i++;
+                    }
+                  }
+
+                  console.log("Puntos del track encontrados:", puntosTrack.length);
+
+                  if (puntosTrack.length < 2) {
+                    alert("No se han encontrado suficientes puntos en el track.");
+                    return;
+                  }
+
+                  if (lineaTrack !== null) {
+                    mapa.removeLayer(lineaTrack);
+                  }
+
+                  lineaTrack = L.polyline(puntosTrack, {
+                    weight: 4,
+                  }).addTo(mapa);
+
+                  mapa.fitBounds(lineaTrack.getBounds());
+                };
+                lector.readAsText(archivo);
+              });
+            let seguirGPS = false;
+
+            document
+              .getElementById("btnSeguirGPS")
+              .addEventListener("click", function () {
+                seguirGPS = !seguirGPS;
+
+                if (seguirGPS) {
+                  this.textContent = "No seguir GPS";
+                  this.classList.add("activo");
+                } else {
+                  this.textContent = "Seguir GPS";
+                  this.classList.remove("activo");
+                }
+              });
+
+            document
+              .getElementById("btnMostrarWaypoints")
+              .addEventListener("click", function () {
+                mostrarTodosWaypoints = !mostrarTodosWaypoints;
+
+                const waypoints =
+                  JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+                if (mostrarTodosWaypoints) {
+                  this.classList.add("activo");
+
+                  waypoints.forEach(function (waypoint) {
+                    const marcador = L.marker([waypoint.latitud, waypoint.longitud])
+                      .addTo(mapa)
+                      .bindPopup(waypoint.nombre);
+
+                    marcadoresWaypoints.push(marcador);
+                  });
+                } else {
+                  this.classList.remove("activo");
+
+                  marcadoresWaypoints.forEach(function (marcador) {
+                    mapa.removeLayer(marcador);
+                  });
+
+                  marcadoresWaypoints = [];
+                }
+              });
+
+            document
+              .getElementById("btnGrabarTrack")
+              .addEventListener("click", async function () {
+                if (grabandoTrack === false) {
+                  if (!window.showDirectoryPicker) {
+                    alert(
+                      "Este navegador no permite seleccionar una carpeta directamente.",
+                    );
+                    return;
+                  }
+
+                  try {
+
+      try {
+
+        carpetaTrackHandle =
+          await window.showDirectoryPicker({
+            mode: "readwrite"
+          });
+
+      } catch (error) {
+
+        console.log("Error al seleccionar la carpeta:", error);
+
+        return;
+      }
+
+      console.log("Error al seleccionar la carpeta:", error);
+
+      alert(
+        "No se ha podido acceder a la carpeta.\n\n" +
+        "Error: " + error.name + "\n" +
+        error.message
+      );
+
+      return;
+      }
+                  grabandoTrack = true;
+                  puntosTrackGrabado = [];
+
+                  if (lineaTrackGrabado !== null) {
+                    mapa.removeLayer(lineaTrackGrabado);
+                    lineaTrackGrabado = null;
+                  }
+                  this.textContent = "Parar track";
+                  this.classList.add("activo");
+
+                  alert("Grabación de track iniciada");
+                } else {
+                  grabandoTrack = false;
+
+                  this.textContent = "Grabar track";
+                  this.classList.remove("activo");
+
+                  if (puntosTrackGrabado.length < 2) {
+                    alert("No hay suficientes puntos para guardar el track.");
+                    return;
+                  }
+
+                  const nombre = prompt("Nombre del track:", "");
+
+                  if (nombre === null) {
+                    return;
+                  }
+
+                  let nombreTrack = nombre.trim();
+
+                  if (nombreTrack === "") {
+                    nombreTrack = "Track";
+                  }
+
+                  let contenidoTrack = "";
+
+                  puntosTrackGrabado.forEach(function (punto) {
+                    for (let i = 0; i < 11; i++) {
+                      contenidoTrack += punto[i] + "\n";
+                    }
+                  });
+
+                  const nombreArchivo = nombreTrack + ".trk";
+
+                  try {
+                    const archivo = await carpetaTrackHandle.getFileHandle(
+                      nombreArchivo,
+                      { create: true },
+                    );
+
+                    const escritor = await archivo.createWritable();
+
+                    await escritor.write(contenidoTrack);
+
+                    await escritor.close();
+
+                    alert(
+                      "Track guardado en la carpeta seleccionada:\n" + nombreArchivo,
+                    );
+                  } catch (error) {
+                    console.log("Error al guardar el track:", error);
+
+                    alert(
+                      "No se ha podido guardar el track.\n\n" +
+                        "Error: " +
+                        error.name +
+                        "\n" +
+                        error.message,
+                    );
+                  }
+                }
+              });
+
+            let seguimientoGPS = null;
+            let marcadorGPS = null;
+            let lineaAlWaypoint = null;
+
+            let ultimaLatitudGPS = null;
+            let ultimaLongitudGPS = null;
+
+            // Obtener posición y comenzar seguimiento
+            function obtenerPosicion() {
+              if (audioDestino === null) {
+                audioDestino = new (
+                  window.AudioContext || window.webkitAudioContext
+                )();
+              }
+
+              if (audioDestino.state === "suspended") {
+                audioDestino.resume();
+              }
+              if (!navigator.geolocation) {
+                alert("Este dispositivo no permite obtener la posición GPS.");
+
+                return;
+              }
+
+              // Si ya estaba activo, no iniciar otro seguimiento
+              if (seguimientoGPS !== null) {
+                return;
+              }
+
+              seguimientoGPS = navigator.geolocation.watchPosition(
+                function (posicion) {
+                  const lat = posicion.coords.latitude;
+
+                  const lon = posicion.coords.longitude;
+
+                  ultimaLatitudGPS = lat;
+                  ultimaLongitudGPS = lon;
+
+                  console.log("Latitud:", lat, "Longitud:", lon);
+
+                  if (grabandoTrack) {
+                    const ahora = new Date();
+
+                    const año = ahora.getFullYear();
+                    const mes = ahora.getMonth() + 1;
+                    const dia = ahora.getDate();
+                    const hora = ahora.getHours();
+                    const minuto = ahora.getMinutes();
+                    const segundo = ahora.getSeconds();
+
+                    const bearing =
+                      posicion.coords.heading !== null ? posicion.coords.heading : 0;
+
+                    const speed =
+                      posicion.coords.speed !== null ? posicion.coords.speed : 0;
+
+                    const altitude =
+                      posicion.coords.altitude !== null
+                        ? posicion.coords.altitude
+                        : 0;
+
+                    const punto = [
+                      lat,
+                      lon,
+                      año,
+                      mes,
+                      dia,
+                      hora,
+                      minuto,
+                      segundo,
+                      bearing,
+                      speed,
+                      altitude,
+                    ];
+
+                    puntosTrackGrabado.push(punto);
+                    if (lineaTrackGrabado === null) {
+                      lineaTrackGrabado = L.polyline(puntosTrackGrabado, {
+                        weight: 4,
+                      }).addTo(mapa);
+                    } else {
+                      lineaTrackGrabado.setLatLngs(puntosTrackGrabado);
+                    }
+                  } // Centrar el mapa solamente si está activado
+                  // el seguimiento GPS
+                  if (marcadorGPS === null || seguirGPS) {
+                    mapa.panTo([lat, lon], {
+                      animate: false,
+                    });
+                  }
+
+                  // Crear el marcador solamente la primera vez
+                  if (marcadorGPS === null) {
+                    marcadorGPS = L.marker([lat, lon])
+                      .addTo(mapa)
+                      .bindPopup("Mi posición");
+                  } else {
+                    // En las siguientes lecturas,
+                    // solamente mover el marcador
+                    marcadorGPS.setLatLng([lat, lon]);
+                  }
+                  // Actualizar la línea hacia el waypoint activo
+                  actualizarLineaAlWaypoint();
+                  actualizarDistanciasYRumbos();
+                },
+
+                function (error) {
+                  alert("No se ha podido obtener la posición GPS.");
+
+                  console.log(error);
+
+                  seguimientoGPS = null;
+                },
+
+                {
+                  enableHighAccuracy: true,
+                  maximumAge: 5000,
+                  timeout: 10000,
+                },
+              );
+            }
+            document
+              .getElementById("btnListaWaypoints")
+              .addEventListener("click", mostrarListaWaypoints);
+
+            document
+              .getElementById("btnCerrarWaypoints")
+              .addEventListener("click", function () {
+                document.getElementById("panelWaypoints").style.display = "none";
+              });
+
+            document
+              .getElementById("btnCancelarDestino")
+              .addEventListener("click", function () {
+                console.log("CANCELAR DESTINO");
+                console.log("lineaAlWaypoint:", lineaAlWaypoint);
+
+                if (lineaAlWaypoint !== null) {
+                  mapa.removeLayer(lineaAlWaypoint);
+                  lineaAlWaypoint = null;
+                  console.log("Línea eliminada");
+                } else {
+                  console.log("NO HAY línea para eliminar");
+                }
+                document.getElementById("infoDestino").style.display = "none";
+                // Quitar el waypoint activo
+                waypointActivo = null;
+                destinoAlcanzado = false;
+              });
+
+            function mostrarListaWaypoints() {
+              const lista = document.getElementById("listaWaypoints");
+
+              lista.innerHTML = "";
+
+              const waypoints =
+                JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+              if (waypoints.length === 0) {
+                lista.innerHTML = "<p>No hay waypoints guardados.</p>";
+              } else {
+                waypoints.forEach(function (waypoint, indice) {
+                  const elemento = document.createElement("div");
+
+                  elemento.className = "waypointItem";
+
+                  elemento.innerHTML =
+                    "<strong>" +
+                    waypoint.nombre +
+                    "</strong><br>" +
+                    waypoint.latitud.toFixed(6) +
+                    "<br>" +
+                    waypoint.longitud.toFixed(6) +
+                    "<br>" +
+                    '<span class="distanciaWaypoint">' +
+                    "Distancia: calculando..." +
+                    "</span>" +
+                    "<br>" +
+                    '<span class="rumboWaypoint">' +
+                    "Rumbo: calculando..." +
+                    "</span>" +
+                    "<br>" +
+                    '<button class="btnBorrarWaypoint">' +
+                    "Borrar" +
+                    "</button>";
+
+                  elemento.addEventListener("click", function (evento) {
+                    if (evento.target.classList.contains("btnBorrarWaypoint")) {
+                      const confirmar = confirm(
+                        '¿Desea borrar el waypoint "' + waypoint.nombre + '"?',
+                      );
+
+                      if (confirmar === false) {
+                        return;
+                      }
+
+                      waypoints.splice(indice, 1);
+
+                      localStorage.setItem(
+                        "pulgarcitoWaypoints",
+                        JSON.stringify(waypoints),
+                      );
+
+                      mapa.closePopup();
+
+                      location.reload();
+
+                      return;
+                    }
+
+                    // Guardar este waypoint como destino activo
+                    waypointActivo = waypoint;
+                    destinoAlcanzado = false;
+                    if (marcadorWaypoint !== null) {
+                      mapa.removeLayer(marcadorWaypoint);
+                    }
+
+                    marcadorWaypoint = L.marker([waypoint.latitud, waypoint.longitud])
+                      .addTo(mapa)
+                      .bindPopup(waypoint.nombre)
+                      .openPopup();
+                    console.log("Waypoint activo:", waypoint.nombre);
+                    document.getElementById("nombreDestino").textContent =
+                      waypoint.nombre;
+
+                    document.getElementById("infoDestino").style.display = "block";
+
+                    if (ultimaLatitudGPS !== null && ultimaLongitudGPS !== null) {
+                      const distancia = calcularDistancia(
+                        ultimaLatitudGPS,
+                        ultimaLongitudGPS,
+                        waypoint.latitud,
+                        waypoint.longitud,
+                      );
+
+                      const rumbo = calcularRumbo(
+                        ultimaLatitudGPS,
+                        ultimaLongitudGPS,
+                        waypoint.latitud,
+                        waypoint.longitud,
+                      );
+
+                      document.getElementById("distanciaDestino").textContent =
+                        "Distancia: " + Math.round(distancia) + " m";
+
+                      document.getElementById("rumboDestino").textContent =
+                        "Rumbo: " + Math.round(rumbo) + "°";
+                    } else {
+                      document.getElementById("distanciaDestino").textContent =
+                        "Distancia: GPS no disponible";
+
+                      document.getElementById("rumboDestino").textContent =
+                        "Rumbo: GPS no disponible";
+                    } // Centrar el mapa
+                    mapa.setView([waypoint.latitud, waypoint.longitud], 16);
+
+                    // Cerrar la lista
+                    document.getElementById("panelWaypoints").style.display = "none";
+                  });
+
+                  lista.appendChild(elemento);
+
+                  // Calcular distancia
+                });
+              }
+
+              document.getElementById("panelWaypoints").style.display = "block";
+            }
+            function calcularDistancia(lat1, lon1, lat2, lon2) {
+              const R = 6371000;
+
+              const rad = Math.PI / 180;
+
+              const dLat = (lat2 - lat1) * rad;
+
+              const dLon = (lon2 - lon1) * rad;
+
+              const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * rad) *
+                  Math.cos(lat2 * rad) *
+                  Math.sin(dLon / 2) *
+                  Math.sin(dLon / 2);
+
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+              return R * c;
+            }
+
+            function calcularRumbo(lat1, lon1, lat2, lon2) {
+              const rad = Math.PI / 180;
+
+              const phi1 = lat1 * rad;
+              const phi2 = lat2 * rad;
+
+              const deltaLon = (lon2 - lon1) * rad;
+
+              const y = Math.sin(deltaLon) * Math.cos(phi2);
+
+              const x =
+                Math.cos(phi1) * Math.sin(phi2) -
+                Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLon);
+
+              let rumbo = Math.atan2(y, x) / rad;
+
+              rumbo = (rumbo + 360) % 360;
+
+              return rumbo;
+            }
+
+            function actualizarLineaAlWaypoint() {
+              // Si no hay waypoint activo, no hacemos nada
+              if (waypointActivo === null) {
+                return;
+              }
+
+              // Si todavía no tenemos posición GPS, no hacemos nada
+              if (ultimaLatitudGPS === null || ultimaLongitudGPS === null) {
+                return;
+              }
+
+              const puntoActual = [ultimaLatitudGPS, ultimaLongitudGPS];
+
+              const puntoWaypoint = [waypointActivo.latitud, waypointActivo.longitud];
+
+              // Crear la línea la primera vez
+              if (lineaAlWaypoint === null) {
+                lineaAlWaypoint = L.polyline([puntoActual, puntoWaypoint], {
+                  weight: 4,
+                }).addTo(mapa);
+              } else {
+                // En las siguientes posiciones,
+                // solamente actualizar los dos puntos
+                lineaAlWaypoint.setLatLngs([puntoActual, puntoWaypoint]);
+              }
+            }
+
+            function actualizarDistanciasYRumbos() {
+              const waypoints =
+                JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
+
+              const elementos = document.querySelectorAll(".waypointItem");
+
+              elementos.forEach(function (elemento, indice) {
+                if (ultimaLatitudGPS === null || ultimaLongitudGPS === null) {
+                  return;
+                }
+
+                const waypoint = waypoints[indice];
+
+                if (!waypoint) {
+                  return;
+                }
+
                 const distancia = calcularDistancia(
                   ultimaLatitudGPS,
                   ultimaLongitudGPS,
@@ -941,175 +1067,49 @@
                   waypoint.longitud,
                 );
 
-                document.getElementById("distanciaDestino").textContent =
+                elemento.querySelector(".distanciaWaypoint").textContent =
                   "Distancia: " + Math.round(distancia) + " m";
 
-                document.getElementById("rumboDestino").textContent =
+                elemento.querySelector(".rumboWaypoint").textContent =
                   "Rumbo: " + Math.round(rumbo) + "°";
-              } else {
+              });
+              if (
+                waypointActivo !== null &&
+                ultimaLatitudGPS !== null &&
+                ultimaLongitudGPS !== null
+              ) {
+                const distanciaDestino = calcularDistancia(
+                  ultimaLatitudGPS,
+                  ultimaLongitudGPS,
+                  waypointActivo.latitud,
+                  waypointActivo.longitud,
+                );
+
+                const rumboDestino = calcularRumbo(
+                  ultimaLatitudGPS,
+                  ultimaLongitudGPS,
+                  waypointActivo.latitud,
+                  waypointActivo.longitud,
+                );
+
                 document.getElementById("distanciaDestino").textContent =
-                  "Distancia: GPS no disponible";
+                  "Distancia: " + Math.round(distanciaDestino) + " m";
 
                 document.getElementById("rumboDestino").textContent =
-                  "Rumbo: GPS no disponible";
-              } // Centrar el mapa
-              mapa.setView([waypoint.latitud, waypoint.longitud], 16);
+                  "Rumbo: " + Math.round(rumboDestino) + "°";
+                if (distanciaDestino <= 20 && destinoAlcanzado === false) {
+                  destinoAlcanzado = true;
+                  if (distanciaDestino <= 20 && destinoAlcanzado === false) {
+                    destinoAlcanzado = true;
 
-              // Cerrar la lista
-              document.getElementById("panelWaypoints").style.display = "none";
-            });
+                    reproducirSonidoDestino();
 
-            lista.appendChild(elemento);
-
-            // Calcular distancia
-          });
-        }
-
-        document.getElementById("panelWaypoints").style.display = "block";
-      }
-      function calcularDistancia(lat1, lon1, lat2, lon2) {
-        const R = 6371000;
-
-        const rad = Math.PI / 180;
-
-        const dLat = (lat2 - lat1) * rad;
-
-        const dLon = (lon2 - lon1) * rad;
-
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(lat1 * rad) *
-            Math.cos(lat2 * rad) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return R * c;
-      }
-
-      function calcularRumbo(lat1, lon1, lat2, lon2) {
-        const rad = Math.PI / 180;
-
-        const phi1 = lat1 * rad;
-        const phi2 = lat2 * rad;
-
-        const deltaLon = (lon2 - lon1) * rad;
-
-        const y = Math.sin(deltaLon) * Math.cos(phi2);
-
-        const x =
-          Math.cos(phi1) * Math.sin(phi2) -
-          Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLon);
-
-        let rumbo = Math.atan2(y, x) / rad;
-
-        rumbo = (rumbo + 360) % 360;
-
-        return rumbo;
-      }
-
-      function actualizarLineaAlWaypoint() {
-        // Si no hay waypoint activo, no hacemos nada
-        if (waypointActivo === null) {
-          return;
-        }
-
-        // Si todavía no tenemos posición GPS, no hacemos nada
-        if (ultimaLatitudGPS === null || ultimaLongitudGPS === null) {
-          return;
-        }
-
-        const puntoActual = [ultimaLatitudGPS, ultimaLongitudGPS];
-
-        const puntoWaypoint = [waypointActivo.latitud, waypointActivo.longitud];
-
-        // Crear la línea la primera vez
-        if (lineaAlWaypoint === null) {
-          lineaAlWaypoint = L.polyline([puntoActual, puntoWaypoint], {
-            weight: 4,
-          }).addTo(mapa);
-        } else {
-          // En las siguientes posiciones,
-          // solamente actualizar los dos puntos
-          lineaAlWaypoint.setLatLngs([puntoActual, puntoWaypoint]);
-        }
-      }
-
-      function actualizarDistanciasYRumbos() {
-        const waypoints =
-          JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
-
-        const elementos = document.querySelectorAll(".waypointItem");
-
-        elementos.forEach(function (elemento, indice) {
-          if (ultimaLatitudGPS === null || ultimaLongitudGPS === null) {
-            return;
-          }
-
-          const waypoint = waypoints[indice];
-
-          if (!waypoint) {
-            return;
-          }
-
-          const distancia = calcularDistancia(
-            ultimaLatitudGPS,
-            ultimaLongitudGPS,
-            waypoint.latitud,
-            waypoint.longitud,
-          );
-
-          const rumbo = calcularRumbo(
-            ultimaLatitudGPS,
-            ultimaLongitudGPS,
-            waypoint.latitud,
-            waypoint.longitud,
-          );
-
-          elemento.querySelector(".distanciaWaypoint").textContent =
-            "Distancia: " + Math.round(distancia) + " m";
-
-          elemento.querySelector(".rumboWaypoint").textContent =
-            "Rumbo: " + Math.round(rumbo) + "°";
-        });
-        if (
-          waypointActivo !== null &&
-          ultimaLatitudGPS !== null &&
-          ultimaLongitudGPS !== null
-        ) {
-          const distanciaDestino = calcularDistancia(
-            ultimaLatitudGPS,
-            ultimaLongitudGPS,
-            waypointActivo.latitud,
-            waypointActivo.longitud,
-          );
-
-          const rumboDestino = calcularRumbo(
-            ultimaLatitudGPS,
-            ultimaLongitudGPS,
-            waypointActivo.latitud,
-            waypointActivo.longitud,
-          );
-
-          document.getElementById("distanciaDestino").textContent =
-            "Distancia: " + Math.round(distanciaDestino) + " m";
-
-          document.getElementById("rumboDestino").textContent =
-            "Rumbo: " + Math.round(rumboDestino) + "°";
-          if (distanciaDestino <= 20 && destinoAlcanzado === false) {
-            destinoAlcanzado = true;
-            if (distanciaDestino <= 20 && destinoAlcanzado === false) {
-              destinoAlcanzado = true;
-
-              reproducirSonidoDestino();
-
-              document.getElementById("distanciaDestino").textContent =
-                "DESTINO ALCANZADO";
+                    document.getElementById("distanciaDestino").textContent =
+                      "DESTINO ALCANZADO";
+                  }
+                }
+              }
             }
-          }
-        }
-      }
     </script>
   </body>
 </html>
