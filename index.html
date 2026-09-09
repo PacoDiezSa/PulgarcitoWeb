@@ -187,22 +187,6 @@
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       }
 
-      #nivelZoom {
-        position: absolute;
-        bottom: 15px;
-        right: 15px;
-        z-index: 1000;
-
-        padding: 8px 12px;
-
-        background: white;
-        border-radius: 6px;
-
-        font-size: 16px;
-        font-weight: bold;
-
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-      }
       #btnBorrarTrack {
         position: absolute;
         top: 365px;
@@ -289,7 +273,6 @@
       <span id="distanciaDestino">Distancia: --</span><br />
       <span id="rumboDestino">Rumbo: --</span>
     </div>
-    <div id="nivelZoom">Zoom: --</div>
 
     <div id="mapa"></div>
 
@@ -309,13 +292,6 @@
       const mapa = L.map("mapa", {
         maxZoom: 22,
       }).setView([43.4623, -3.8099], 13);
-      document.getElementById("nivelZoom").textContent =
-        "Zoom: " + mapa.getZoom();
-
-      mapa.on("zoomend", function () {
-        document.getElementById("nivelZoom").textContent =
-          "Zoom: " + mapa.getZoom();
-      });
       // Mapa OpenStreetMap provisional
       // Ortofoto PNOA Máxima Actualidad del IGN
       L.tileLayer
