@@ -234,19 +234,42 @@
 
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       }
+
+      #barraBotones button {
+        position: static;
+        flex: 0 0 auto;
+      }
+
+      #barraBotones {
+        position: absolute;
+        bottom: 15px;
+        left: 15px;
+        right: 15px;
+
+        z-index: 1000;
+
+        display: flex;
+        gap: 8px;
+
+        overflow-x: auto;
+        white-space: nowrap;
+
+        padding: 5px;
+      }
     </style>
   </head>
 
   <body>
-    <button id="btnGPS">Mi posición</button>
-    <button id="btnSeguirGPS">Seguir GPS</button>
-    <button id="btnWaypoint">Crear waypoint</button>
-    <button id="btnListaWaypoints">Waypoints</button>
-    <button id="btnMostrarWaypoints">Mostrar waypoints</button>
-    <button id="btnCancelarDestino">Cancelar destino</button>
-    <button id="btnCargarTrack">Cargar track</button>
-    <button id="btnBorrarTrack">Borrar track</button>
-
+    <div id="barraBotones">
+      <button id="btnGPS">Mi posición</button>
+      <button id="btnSeguirGPS">Seguir GPS</button>
+      <button id="btnWaypoint">Crear waypoint</button>
+      <button id="btnListaWaypoints">Waypoints</button>
+      <button id="btnMostrarWaypoints">Mostrar waypoints</button>
+      <button id="btnCancelarDestino">Cancelar destino</button>
+      <button id="btnCargarTrack">Cargar track</button>
+      <button id="btnBorrarTrack">Borrar track</button>
+    </div>
     <input
       type="file"
       id="inputTrack"
