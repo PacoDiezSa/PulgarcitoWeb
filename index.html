@@ -1487,7 +1487,9 @@
           //       "DESTINO ALCANZADO";
           //   }
           // }
-          if (distanciaDestino <= 20) {
+          if (distanciaDestino <= 20 && destinoAlcanzado === false) {
+            destinoAlcanzado = true;
+
             reproducirSonidoDestino();
 
             document.getElementById("distanciaDestino").textContent =
