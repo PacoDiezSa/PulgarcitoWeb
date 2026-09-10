@@ -257,6 +257,18 @@
         line-height: 60px !important;
         font-size: 40px !important;
       }
+      #contadorPuntos {
+        display: none;
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 1000;
+        padding: 10px 14px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        font-size: 16px;
+      }
     </style>
   </head>
 
@@ -287,6 +299,7 @@
     </div>
 
     <div id="mapa"></div>
+    <div id="contadorPuntos">Puntos grabados: 0</div>
 
     <div id="panelWaypoints">
       <h3>Waypoints guardados</h3>
@@ -1075,9 +1088,10 @@
               ];
 
               puntosTrackGrabado.push(punto);
-              document.getElementById("infoDestino").innerHTML =
+              document.getElementById("contadorPuntos").textContent =
                 "Puntos grabados: " + puntosTrackGrabado.length;
-              document.getElementById("infoDestino").style.display = "block";
+
+              document.getElementById("contadorPuntos").style.display = "block";
               const puntosParaDibujar = puntosTrackGrabado.map(
                 function (punto) {
                   return [punto[0], punto[1]];
