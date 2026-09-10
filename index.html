@@ -483,18 +483,48 @@
 
       document
         .getElementById("btnBorrarTrack")
-        .addEventListener("click", function () {
-          if (lineaTrack !== null) {
-            mapa.removeLayer(lineaTrack);
-            lineaTrack = null;
+        .addEventListener("click", async function () {
+          if (!window.showDirectoryPicker) {
+            alert(
+              "Este navegador no permite seleccionar una carpeta directamente.",
+            );
+            return;
           }
 
-          if (lineaTrackGrabado !== null) {
-            mapa.removeLayer(lineaTrackGrabado);
-            lineaTrackGrabado = null;
+          try {
+            const carpeta = await window.showDirectoryPicker({
+              mode: "readwrite",
+            });
+
+            const tracks = [];
+
+            for await (const entrada of carpeta.values()) {
+              if (
+                entrada.kind === "file" &&
+                entrada.name.toLowerCase().endsWith(".trk")
+              ) {
+                tracks.push(entrada);
+              }
+            }
+
+            if (tracks.length === 0) {
+              alert("No hay archivos .trk en esta carpeta.");
+              return;
+            }
+
+            let mensaje = "Tracks encontrados:\n\n";
+
+            tracks.forEach(function (track, indice) {
+              mensaje += indice + 1 + ". " + track.name + "\n";
+            });
+
+            alert(mensaje);
+          } catch (error) {
+            console.log("Error al abrir la carpeta de tracks:", error);
+
+            return;
           }
         });
-
       document
         .getElementById("inputTrack")
         .addEventListener("change", function () {
