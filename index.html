@@ -1068,12 +1068,18 @@
               ];
 
               puntosTrackGrabado.push(punto);
+              const puntosParaDibujar = puntosTrackGrabado.map(
+                function (punto) {
+                  return [punto[0], punto[1]];
+                },
+              );
+
               if (lineaTrackGrabado === null) {
-                lineaTrackGrabado = L.polyline(puntosTrackGrabado, {
+                lineaTrackGrabado = L.polyline(puntosParaDibujar, {
                   weight: 4,
                 }).addTo(mapa);
               } else {
-                lineaTrackGrabado.setLatLngs(puntosTrackGrabado);
+                lineaTrackGrabado.setLatLngs(puntosParaDibujar);
               }
             } // Centrar el mapa solamente si está activado
             // el seguimiento GPS
