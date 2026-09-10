@@ -602,11 +602,34 @@
             }
 
             try {
-              carpetaTrackHandle = await window.showDirectoryPicker({
-                mode: "readwrite",
-              });
+              carpetaTrackHandle = await recuperarCarpetaTrack();
+
+              if (carpetaTrackHandle !== null) {
+                const permiso = await carpetaTrackHandle.queryPermission({
+                  mode: "readwrite",
+                });
+
+                if (permiso !== "granted") {
+                  const nuevoPermiso =
+                    await carpetaTrackHandle.requestPermission({
+                      mode: "readwrite",
+                    });
+
+                  if (nuevoPermiso !== "granted") {
+                    carpetaTrackHandle = null;
+                  }
+                }
+              }
+
+              if (carpetaTrackHandle === null) {
+                carpetaTrackHandle = await window.showDirectoryPicker({
+                  mode: "readwrite",
+                });
+
+                await guardarCarpetaTrack(carpetaTrackHandle);
+              }
             } catch (error) {
-              console.log("Error al seleccionar la carpeta:", error);
+              console.log("Error al acceder a la carpeta:", error);
 
               return;
             }
@@ -714,6 +737,82 @@
 
       let ultimaLatitudGPS = null;
       let ultimaLongitudGPS = null;
+
+      function guardarCarpetaTrack(handle) {
+        return new Promise(function (resolve, reject) {
+          const solicitud = indexedDB.open("PulgarcitoDB", 1);
+
+          solicitud.onupgradeneeded = function () {
+            const db = solicitud.result;
+
+            if (!db.objectStoreNames.contains("configuracion")) {
+              db.createObjectStore("configuracion");
+            }
+          };
+
+          solicitud.onsuccess = function () {
+            const db = solicitud.result;
+
+            const transaccion = db.transaction("configuracion", "readwrite");
+
+            const almacen = transaccion.objectStore("configuracion");
+
+            almacen.put(handle, "carpetaTrack");
+
+            transaccion.oncomplete = function () {
+              db.close();
+              resolve();
+            };
+
+            transaccion.onerror = function () {
+              db.close();
+              reject(transaccion.error);
+            };
+          };
+
+          solicitud.onerror = function () {
+            reject(solicitud.error);
+          };
+        });
+      }
+
+      function recuperarCarpetaTrack() {
+        return new Promise(function (resolve, reject) {
+          const solicitud = indexedDB.open("PulgarcitoDB", 1);
+
+          solicitud.onupgradeneeded = function () {
+            const db = solicitud.result;
+
+            if (!db.objectStoreNames.contains("configuracion")) {
+              db.createObjectStore("configuracion");
+            }
+          };
+
+          solicitud.onsuccess = function () {
+            const db = solicitud.result;
+
+            const transaccion = db.transaction("configuracion", "readonly");
+
+            const almacen = transaccion.objectStore("configuracion");
+
+            const peticion = almacen.get("carpetaTrack");
+
+            peticion.onsuccess = function () {
+              db.close();
+              resolve(peticion.result || null);
+            };
+
+            peticion.onerror = function () {
+              db.close();
+              reject(peticion.error);
+            };
+          };
+
+          solicitud.onerror = function () {
+            reject(solicitud.error);
+          };
+        });
+      }
 
       // Obtener posición y comenzar seguimiento
       function obtenerPosicion() {
