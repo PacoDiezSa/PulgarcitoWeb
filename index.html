@@ -488,6 +488,11 @@
             mapa.removeLayer(lineaTrack);
             lineaTrack = null;
           }
+
+          if (lineaTrackGrabado !== null) {
+            mapa.removeLayer(lineaTrackGrabado);
+            lineaTrackGrabado = null;
+          }
         });
 
       document
