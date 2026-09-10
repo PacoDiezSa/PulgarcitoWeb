@@ -508,7 +508,12 @@
 
             const puntosTrack = [];
 
-            for (let i = 0; i < lineas.length - 1; i++) {
+            // Cada punto del track ocupa 11 líneas.
+            // Solo utilizamos las dos primeras:
+            // línea 1 = latitud
+            // línea 2 = longitud
+
+            for (let i = 0; i + 10 < lineas.length; i += 11) {
               const lat = parseFloat(lineas[i].trim());
               const lon = parseFloat(lineas[i + 1].trim());
 
@@ -516,15 +521,11 @@
                 Number.isFinite(lat) &&
                 Number.isFinite(lon) &&
                 Math.abs(lat) <= 90 &&
-                Math.abs(lon) <= 180 &&
-                lineas[i].includes(".") &&
-                lineas[i + 1].includes(".")
+                Math.abs(lon) <= 180
               ) {
                 puntosTrack.push([lat, lon]);
-                i++;
               }
             }
-
             console.log("Puntos del track encontrados:", puntosTrack.length);
 
             if (puntosTrack.length < 2) {
