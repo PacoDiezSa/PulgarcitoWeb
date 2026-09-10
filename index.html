@@ -632,18 +632,43 @@
               return;
             }
 
-            const nombre = prompt("Nombre del track:", "");
+            let nombreTrack;
 
-            if (nombre === null) {
-              return;
+            while (true) {
+              const nombre = prompt("Nombre del track:", "");
+
+              if (nombre === null) {
+                return;
+              }
+
+              nombreTrack = nombre.trim();
+
+              if (nombreTrack === "") {
+                nombreTrack = "Track";
+              }
+
+              const nombreArchivo = nombreTrack + ".trk";
+
+              try {
+                await carpetaTrackHandle.getFileHandle(nombreArchivo);
+
+                alert(
+                  "Ya existe un track con el nombre:\n\n" +
+                    nombreArchivo +
+                    "\n\nEscriba otro nombre.",
+                );
+              } catch (error) {
+                if (error.name === "NotFoundError") {
+                  break;
+                }
+
+                console.log("Error al comprobar el archivo:", error);
+
+                alert("No se ha podido comprobar si el archivo existe.");
+
+                return;
+              }
             }
-
-            let nombreTrack = nombre.trim();
-
-            if (nombreTrack === "") {
-              nombreTrack = "Track";
-            }
-
             let contenidoTrack = "";
 
             puntosTrackGrabado.forEach(function (punto) {
@@ -652,7 +677,7 @@
               }
             });
 
-            const nombreArchivo = nombreTrack + ".trk";
+            //const nombreArchivo = nombreTrack + ".trk";
 
             try {
               const archivo = await carpetaTrackHandle.getFileHandle(
