@@ -477,8 +477,102 @@
         .addEventListener("click", obtenerPosicion);
       document
         .getElementById("btnCargarTrack")
-        .addEventListener("click", function () {
-          document.getElementById("inputTrack").click();
+        .addEventListener("click", async function () {
+          if (!window.showDirectoryPicker) {
+            alert(
+              "Este navegador no permite seleccionar una carpeta directamente.",
+            );
+            return;
+          }
+
+          try {
+            const carpeta = await window.showDirectoryPicker();
+
+            const tracks = [];
+
+            for await (const entrada of carpeta.values()) {
+              if (
+                entrada.kind === "file" &&
+                entrada.name.toLowerCase().endsWith(".trk")
+              ) {
+                tracks.push(entrada);
+              }
+            }
+
+            if (tracks.length === 0) {
+              alert("No hay archivos .trk en esta carpeta.");
+              return;
+            }
+
+            let mensaje = "Seleccione el track que desea cargar:\n\n";
+
+            tracks.forEach(function (track, indice) {
+              mensaje += indice + 1 + ". " + track.name + "\n";
+            });
+
+            const respuesta = prompt(mensaje);
+
+            if (respuesta === null) {
+              return;
+            }
+
+            const indice = parseInt(respuesta, 10) - 1;
+
+            if (
+              !Number.isInteger(indice) ||
+              indice < 0 ||
+              indice >= tracks.length
+            ) {
+              alert("Selección no válida.");
+              return;
+            }
+
+            const archivo = await tracks[indice].getFile();
+
+            const lector = new FileReader();
+
+            lector.onload = function () {
+              const lineas = lector.result.split(/\r?\n/);
+
+              const puntosTrack = [];
+
+              for (let i = 0; i + 10 < lineas.length; i += 11) {
+                const lat = parseFloat(lineas[i].trim());
+
+                const lon = parseFloat(lineas[i + 1].trim());
+
+                if (
+                  Number.isFinite(lat) &&
+                  Number.isFinite(lon) &&
+                  Math.abs(lat) <= 90 &&
+                  Math.abs(lon) <= 180
+                ) {
+                  puntosTrack.push([lat, lon]);
+                }
+              }
+
+              if (puntosTrack.length < 2) {
+                alert("No se han encontrado suficientes puntos en el track.");
+                return;
+              }
+
+              if (lineaTrack !== null) {
+                mapa.removeLayer(lineaTrack);
+              }
+
+              lineaTrack = L.polyline(puntosTrack, {
+                weight: 4,
+              }).addTo(mapa);
+
+              mapa.fitBounds(lineaTrack.getBounds());
+            };
+
+            lector.readAsText(archivo);
+          } catch (error) {
+            console.log("Error al cargar el track:", error);
+
+            return;
+          }
         });
 
       document
