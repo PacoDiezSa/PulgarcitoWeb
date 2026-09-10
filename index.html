@@ -502,7 +502,9 @@
         .getElementById("btnGPS")
         .addEventListener("click", obtenerPosicion);
 
+      alert("Iniciando GPS automáticamente");
       obtenerPosicion();
+
       document
         .getElementById("btnCargarTrack")
         .addEventListener("click", async function () {
