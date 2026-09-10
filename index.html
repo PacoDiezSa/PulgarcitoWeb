@@ -615,9 +615,9 @@
               }
 
               lineaTrack = L.polyline(puntosTrack, {
+                color: "blue",
                 weight: 4,
               }).addTo(mapa);
-
               mapa.fitBounds(lineaTrack.getBounds());
             };
 
@@ -1153,6 +1153,7 @@
 
                 if (lineaTrackGrabado === null) {
                   lineaTrackGrabado = L.polyline(puntosParaDibujar, {
+                    color: "red",
                     weight: 4,
                   }).addTo(mapa);
                 } else {
