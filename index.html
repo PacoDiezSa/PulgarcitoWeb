@@ -516,13 +516,19 @@
       });
 
       // Botón GPS
-      document
-        .getElementById("btnGPS")
-        .addEventListener("click", obtenerPosicion);
+      document.getElementById("btnGPS").addEventListener("click", function () {
+        if (audioDestino === null) {
+          audioDestino = new (
+            window.AudioContext || window.webkitAudioContext
+          )();
+        }
 
-      // alert("Iniciando GPS automáticamente");
-      // obtenerPosicion();
+        if (audioDestino.state === "suspended") {
+          audioDestino.resume();
+        }
 
+        obtenerPosicion();
+      });
       document
         .getElementById("btnCargarTrack")
         .addEventListener("click", async function () {
@@ -1024,15 +1030,6 @@
 
       // Obtener posición y comenzar seguimiento
       function obtenerPosicion() {
-        if (audioDestino === null) {
-          audioDestino = new (
-            window.AudioContext || window.webkitAudioContext
-          )();
-        }
-
-        if (audioDestino.state === "suspended") {
-          audioDestino.resume();
-        }
         if (!navigator.geolocation) {
           alert("Este dispositivo no permite obtener la posición GPS.");
 
