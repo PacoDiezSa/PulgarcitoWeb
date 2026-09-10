@@ -512,19 +512,49 @@
               return;
             }
 
-            let mensaje = "Tracks encontrados:\n\n";
+            let mensaje = "Escriba el número del track que desea borrar:\n\n";
 
             tracks.forEach(function (track, indice) {
               mensaje += indice + 1 + ". " + track.name + "\n";
             });
 
-            alert(mensaje);
+            const respuesta = prompt(mensaje);
+
+            if (respuesta === null) {
+              return;
+            }
+
+            const indice = parseInt(respuesta, 10) - 1;
+
+            if (
+              !Number.isInteger(indice) ||
+              indice < 0 ||
+              indice >= tracks.length
+            ) {
+              alert("Selección no válida.");
+              return;
+            }
+
+            const trackSeleccionado = tracks[indice];
+
+            const confirmar = confirm(
+              "¿Desea borrar este track?\n\n" + trackSeleccionado.name,
+            );
+
+            if (!confirmar) {
+              return;
+            }
+
+            await carpeta.removeEntry(trackSeleccionado.name);
+
+            alert("Track borrado:\n" + trackSeleccionado.name);
           } catch (error) {
             console.log("Error al abrir la carpeta de tracks:", error);
 
             return;
           }
         });
+
       document
         .getElementById("inputTrack")
         .addEventListener("change", function () {
