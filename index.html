@@ -1476,16 +1476,22 @@
 
           document.getElementById("rumboDestino").textContent =
             "Rumbo: " + Math.round(rumboDestino) + "°";
-          if (distanciaDestino <= 20 && destinoAlcanzado === false) {
-            destinoAlcanzado = true;
-            if (distanciaDestino <= 20 && destinoAlcanzado === false) {
-              destinoAlcanzado = true;
+          // if (distanciaDestino <= 20 && destinoAlcanzado === false) {
+          //   destinoAlcanzado = true;
+          //   if (distanciaDestino <= 20 && destinoAlcanzado === false) {
+          //     destinoAlcanzado = true;
 
-              reproducirSonidoDestino();
+          //     reproducirSonidoDestino();
 
-              document.getElementById("distanciaDestino").textContent =
-                "DESTINO ALCANZADO";
-            }
+          //     document.getElementById("distanciaDestino").textContent =
+          //       "DESTINO ALCANZADO";
+          //   }
+          // }
+          if (distanciaDestino <= 20) {
+            reproducirSonidoDestino();
+
+            document.getElementById("distanciaDestino").textContent =
+              "DESTINO ALCANZADO";
           }
         }
       }
