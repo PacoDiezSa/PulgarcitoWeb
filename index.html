@@ -348,6 +348,9 @@
       let carpetaTrackHandle = null;
       let mostrarTodosWaypoints = false;
       let marcadoresWaypoints = [];
+      let ultimoTiempoTrack = null;
+      let ultimaLatitudTrack = null;
+      let ultimaLongitudTrack = null;
 
       function reproducirSonidoDestino() {
         if (audioDestino === null) {
@@ -1087,25 +1090,58 @@
                 altitude,
               ];
 
-              puntosTrackGrabado.push(punto);
-              document.getElementById("contadorPuntos").textContent =
-                "Puntos grabados: " + puntosTrackGrabado.length;
+              const ahoraMilisegundos = Date.now();
 
-              document.getElementById("contadorPuntos").style.display = "block";
-              const puntosParaDibujar = puntosTrackGrabado.map(
-                function (punto) {
-                  return [punto[0], punto[1]];
-                },
-              );
+              let aceptarPunto = false;
 
-              if (lineaTrackGrabado === null) {
-                lineaTrackGrabado = L.polyline(puntosParaDibujar, {
-                  weight: 4,
-                }).addTo(mapa);
+              if (ultimoTiempoTrack === null) {
+                aceptarPunto = true;
               } else {
-                lineaTrackGrabado.setLatLngs(puntosParaDibujar);
+                const tiempoTranscurrido =
+                  ahoraMilisegundos - ultimoTiempoTrack;
+
+                const distancia = calcularDistancia(
+                  ultimaLatitudTrack,
+                  ultimaLongitudTrack,
+                  lat,
+                  lon,
+                );
+
+                if (tiempoTranscurrido >= 1000 && distancia >= 10) {
+                  aceptarPunto = true;
+                }
               }
-            } // Centrar el mapa solamente si está activado
+
+              if (aceptarPunto) {
+                puntosTrackGrabado.push(punto);
+
+                ultimoTiempoTrack = ahoraMilisegundos;
+                ultimaLatitudTrack = lat;
+                ultimaLongitudTrack = lon;
+
+                document.getElementById("contadorPuntos").textContent =
+                  "Puntos grabados: " + puntosTrackGrabado.length;
+
+                document.getElementById("contadorPuntos").style.display =
+                  "block";
+
+                const puntosParaDibujar = puntosTrackGrabado.map(
+                  function (punto) {
+                    return [punto[0], punto[1]];
+                  },
+                );
+
+                if (lineaTrackGrabado === null) {
+                  lineaTrackGrabado = L.polyline(puntosParaDibujar, {
+                    weight: 4,
+                  }).addTo(mapa);
+                } else {
+                  lineaTrackGrabado.setLatLngs(puntosParaDibujar);
+                }
+              }
+            }
+
+            // Centrar el mapa solamente si está activado
             // el seguimiento GPS
             if (marcadorGPS === null || seguirGPS) {
               mapa.panTo([lat, lon], {
