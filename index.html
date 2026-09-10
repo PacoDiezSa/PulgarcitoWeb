@@ -898,6 +898,7 @@
 
       let ultimaLatitudGPS = null;
       let ultimaLongitudGPS = null;
+      let rumboMapa = null;
 
       function guardarCarpetaTrack(handle) {
         return new Promise(function (resolve, reject) {
@@ -1004,9 +1005,28 @@
             const heading = posicion.coords.heading;
 
             if (seguirGPS && heading !== null && Number.isFinite(heading)) {
-              mapa.setBearing(heading);
-            }
+              const nuevoRumbo = (heading + 180) % 360;
 
+              if (rumboMapa === null) {
+                rumboMapa = nuevoRumbo;
+              } else {
+                let diferencia = nuevoRumbo - rumboMapa;
+
+                if (diferencia > 180) {
+                  diferencia -= 360;
+                }
+
+                if (diferencia < -180) {
+                  diferencia += 360;
+                }
+
+                rumboMapa = rumboMapa + diferencia * 0.15;
+
+                rumboMapa = (rumboMapa + 360) % 360;
+              }
+
+              mapa.setBearing(rumboMapa);
+            }
             ultimaLatitudGPS = lat;
             ultimaLongitudGPS = lon;
 
