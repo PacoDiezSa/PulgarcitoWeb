@@ -496,10 +496,13 @@
           .bindPopup(nombreWaypoint)
           .openPopup();
       });
+
       // Botón GPS
       document
         .getElementById("btnGPS")
         .addEventListener("click", obtenerPosicion);
+
+      obtenerPosicion();
       document
         .getElementById("btnCargarTrack")
         .addEventListener("click", async function () {
