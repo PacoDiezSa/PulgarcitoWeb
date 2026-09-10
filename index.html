@@ -359,14 +359,19 @@
           )();
         }
 
+        if (audioDestino.state === "suspended") {
+          audioDestino.resume();
+        }
+
         function pitido() {
           const oscilador = audioDestino.createOscillator();
+
           const ganancia = audioDestino.createGain();
 
           oscilador.type = "sine";
           oscilador.frequency.value = 880;
 
-          ganancia.gain.value = 0.2;
+          ganancia.gain.value = 0.5;
 
           oscilador.connect(ganancia);
           ganancia.connect(audioDestino.destination);
@@ -375,7 +380,7 @@
 
           setTimeout(function () {
             oscilador.stop();
-          }, 200);
+          }, 250);
         }
 
         pitido();
@@ -387,7 +392,20 @@
         setTimeout(function () {
           pitido();
         }, 700);
+
+        setTimeout(function () {
+          pitido();
+        }, 1050);
+
+        setTimeout(function () {
+          pitido();
+        }, 1400);
+
+        setTimeout(function () {
+          pitido();
+        }, 1750);
       }
+
       document
         .getElementById("btnWaypoint")
         .addEventListener("click", async function () {
