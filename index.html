@@ -283,6 +283,8 @@
       <button id="btnGrabarTrack">Grabar track</button>
       <button id="btnCargarTrack">Cargar track</button>
       <button id="btnBorrarTrack">Borrar track</button>
+      <button id="btnProbarMapaSD">Probar mapa SD</button>
+      <button id="btnProbarMapaSD">Probar mapa SD</button>
     </div>
     <input
       type="file"
@@ -319,16 +321,50 @@
         rotate: true,
       }).setView([43.4623, -3.8099], 13);
 
-      // Mapa OpenStreetMap provisional
-      // Ortofoto PNOA Máxima Actualidad del IGN
-      L.tileLayer
-        .wms("https://www.ign.es/wms-inspire/pnoa-ma", {
+      // ==============================
+      // MAPA DE FONDO: PNOA
+      // ==============================
+
+      const mapaPNOA = L.tileLayer.wms(
+        "https://www.ign.es/wms-inspire/pnoa-ma",
+        {
           layers: "OI.OrthoimageCoverage",
           format: "image/jpeg",
           transparent: false,
           version: "1.3.0",
-          maxZoom: 22,
           attribution: "PNOA © Instituto Geográfico Nacional",
+        },
+      );
+
+      // ==============================
+      // MAPA DE FONDO: OFFLINE
+      // ==============================
+
+      const mapaOffline = L.tileLayer("mapaOffline/{z}/{x}/{y}.jpg", {
+        minZoom: 12,
+        maxZoom: 18,
+        maxNativeZoom: 14,
+        attribution: "Mapa offline",
+      });
+
+      // ==============================
+      // MAPA INICIAL
+      // ==============================
+
+      mapaPNOA.addTo(mapa);
+
+      // ==============================
+      // SELECTOR DE MAPA DE FONDO
+      // ==============================
+
+      const mapasBase = {
+        PNOA: mapaPNOA,
+        "Mapa offline Cantabria": mapaOffline,
+      };
+
+      L.control
+        .layers(mapasBase, null, {
+          position: "topright",
         })
         .addTo(mapa);
       // Recuperar waypoints guardados
@@ -941,6 +977,35 @@
                   error.message,
               );
             }
+          }
+        });
+
+      document
+        .getElementById("btnProbarMapaSD")
+        .addEventListener("click", async function () {
+          if (!window.showDirectoryPicker) {
+            alert("Este navegador no permite seleccionar carpetas.");
+            return;
+          }
+
+          try {
+            const carpeta = await window.showDirectoryPicker();
+
+            let mensaje =
+              "Carpeta seleccionada:\n\n" + carpeta.name + "\n\nContenido:\n";
+
+            for await (const entrada of carpeta.values()) {
+              mensaje +=
+                "\n" +
+                (entrada.kind === "directory" ? "[CARPETA] " : "[ARCHIVO] ") +
+                entrada.name;
+            }
+
+            alert(mensaje);
+          } catch (error) {
+            console.log("Error al seleccionar la carpeta:", error);
+
+            alert("No se ha podido acceder a la carpeta.");
           }
         });
 
