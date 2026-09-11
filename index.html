@@ -351,7 +351,67 @@
         maxNativeZoom: 14,
         attribution: "Mapa offline",
 
+        // createTile: async function (coords, done) {
+        //   const tile = document.createElement("img");
+
+        //   tile.alt = "";
+        //   tile.setAttribute("role", "presentation");
+
+        //   if (carpetaMapaSD === null) {
+        //     done(
+        //       new Error("No se ha seleccionado la carpeta del mapa offline."),
+        //       tile,
+        //     );
+        //     return tile;
+        //   }
+
+        //   try {
+
+        //     const carpetaZ = await carpetaMapaSD.getDirectoryHandle(
+        //       String(coords.z),
+        //     );
+
+        //     const carpetaX = await carpetaZ.getDirectoryHandle(
+        //       String(coords.x),
+        //     );
+
+        //     const archivo = await carpetaX.getFileHandle(
+        //       String(coords.y) + ".jpg",
+        //     );
+
+        //     const fichero = await archivo.getFile();
+
+        //     const url = URL.createObjectURL(fichero);
+
+        //     tile.onload = function () {
+        //       URL.revokeObjectURL(url);
+        //       done(null, tile);
+        //     };
+
+        //     tile.onerror = function () {
+        //       URL.revokeObjectURL(url);
+        //       done(new Error("No se ha podido mostrar el mosaico."), tile);
+        //     };
+
+        //     tile.src = url;
+        //   } catch (error) {
+        //     console.log(
+        //       "No se ha encontrado el mosaico:",
+        //       coords.z,
+        //       coords.x,
+        //       coords.y,
+        //       error,
+        //     );
+
+        //     done(error, tile);
+        //   }
+
+        //   return tile;
+        // },
         createTile: async function (coords, done) {
+          alert(
+            "SOLICITA: z=" + coords.z + " x=" + coords.x + " y=" + coords.y,
+          );
           const tile = document.createElement("img");
 
           tile.alt = "";
@@ -389,17 +449,23 @@
 
             tile.onerror = function () {
               URL.revokeObjectURL(url);
-              done(new Error("No se ha podido mostrar el mosaico."), tile);
+              done(new Error("Error cargando JPG"), tile);
             };
 
             tile.src = url;
           } catch (error) {
-            console.log(
-              "No se ha encontrado el mosaico:",
-              coords.z,
-              coords.x,
-              coords.y,
-              error,
+            alert(
+              "ERROR MAPA SD\n\n" +
+                "z = " +
+                coords.z +
+                "\nx = " +
+                coords.x +
+                "\ny = " +
+                coords.y +
+                "\n\n" +
+                error.name +
+                "\n" +
+                error.message,
             );
 
             done(error, tile);
