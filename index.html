@@ -339,11 +339,74 @@
       // MAPA DE FONDO: OFFLINE
       // ==============================
 
-      const mapaOffline = L.tileLayer("mapaOffline/{z}/{x}/{y}.jpg", {
+      let carpetaMapaSD = null;
+
+      // ==============================
+      // MAPA DE FONDO: OFFLINE
+      // ==============================
+
+      const mapaOffline = L.gridLayer({
         minZoom: 12,
         maxZoom: 18,
         maxNativeZoom: 14,
         attribution: "Mapa offline",
+
+        createTile: async function (coords, done) {
+          const tile = document.createElement("img");
+
+          tile.alt = "";
+          tile.setAttribute("role", "presentation");
+
+          if (carpetaMapaSD === null) {
+            done(
+              new Error("No se ha seleccionado la carpeta del mapa offline."),
+              tile,
+            );
+            return tile;
+          }
+
+          try {
+            const carpetaZ = await carpetaMapaSD.getDirectoryHandle(
+              String(coords.z),
+            );
+
+            const carpetaX = await carpetaZ.getDirectoryHandle(
+              String(coords.x),
+            );
+
+            const archivo = await carpetaX.getFileHandle(
+              String(coords.y) + ".jpg",
+            );
+
+            const fichero = await archivo.getFile();
+
+            const url = URL.createObjectURL(fichero);
+
+            tile.onload = function () {
+              URL.revokeObjectURL(url);
+              done(null, tile);
+            };
+
+            tile.onerror = function () {
+              URL.revokeObjectURL(url);
+              done(new Error("No se ha podido mostrar el mosaico."), tile);
+            };
+
+            tile.src = url;
+          } catch (error) {
+            console.log(
+              "No se ha encontrado el mosaico:",
+              coords.z,
+              coords.x,
+              coords.y,
+              error,
+            );
+
+            done(error, tile);
+          }
+
+          return tile;
+        },
       });
 
       // ==============================
@@ -990,21 +1053,43 @@
           try {
             const carpeta = await window.showDirectoryPicker();
 
-            let mensaje =
-              "Carpeta seleccionada:\n\n" + carpeta.name + "\n\nContenido:\n";
+            // Guardamos la carpeta seleccionada para el mapa offline
+            carpetaMapaSD = carpeta;
+
+            // Comprobamos que contiene las carpetas de zoom
+            const niveles = [];
 
             for await (const entrada of carpeta.values()) {
-              mensaje +=
-                "\n" +
-                (entrada.kind === "directory" ? "[CARPETA] " : "[ARCHIVO] ") +
-                entrada.name;
+              if (
+                entrada.kind === "directory" &&
+                ["12", "13", "14"].includes(entrada.name)
+              ) {
+                niveles.push(entrada.name);
+              }
             }
 
-            alert(mensaje);
-          } catch (error) {
-            console.log("Error al seleccionar la carpeta:", error);
+            if (niveles.length === 0) {
+              alert(
+                "La carpeta seleccionada no contiene las carpetas 12, 13 o 14.",
+              );
+              carpetaMapaSD = null;
+              return;
+            }
 
-            alert("No se ha podido acceder a la carpeta.");
+            alert(
+              "Mapa offline seleccionado correctamente.\n\n" +
+                "Carpeta: " +
+                carpeta.name +
+                "\n\n" +
+                "Niveles encontrados: " +
+                niveles.sort().join(", "),
+            );
+          } catch (error) {
+            console.log("Error al seleccionar la carpeta del mapa:", error);
+
+            carpetaMapaSD = null;
+
+            alert("No se ha podido acceder a la carpeta del mapa.");
           }
         });
 
