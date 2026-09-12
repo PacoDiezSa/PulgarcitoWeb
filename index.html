@@ -533,6 +533,18 @@
             }
           }
 
+          alert(
+            "CARPETA: " +
+              carpeta.name +
+              "\n\nARCHIVOS TRK ENCONTRADOS: " +
+              tracks.length +
+              "\n\n" +
+              tracks
+                .map(function (t) {
+                  return t.name;
+                })
+                .join("\n"),
+          );
           if (niveles.length === 0) {
             alert("La carpeta seleccionada no contiene las carpetas 10 a 15.");
 
