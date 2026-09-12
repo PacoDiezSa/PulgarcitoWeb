@@ -558,77 +558,157 @@
               return;
             }
 
-            let mensaje = "Seleccione el track que desea cargar:\n\n";
+            // =========================================================
+            // VENTANA PROPIA PARA SELECCIONAR EL TRACK
+            // =========================================================
+
+            const fondo = document.createElement("div");
+
+            fondo.style.position = "fixed";
+            fondo.style.left = "0";
+            fondo.style.top = "0";
+            fondo.style.width = "100%";
+            fondo.style.height = "100%";
+            fondo.style.backgroundColor = "rgba(0,0,0,0.45)";
+            fondo.style.zIndex = "10000";
+            fondo.style.display = "flex";
+            fondo.style.alignItems = "center";
+            fondo.style.justifyContent = "center";
+
+            const ventana = document.createElement("div");
+
+            ventana.style.backgroundColor = "white";
+            ventana.style.padding = "20px";
+            ventana.style.borderRadius = "10px";
+            ventana.style.width = "85%";
+            ventana.style.maxWidth = "450px";
+            ventana.style.boxSizing = "border-box";
+            ventana.style.boxShadow = "0 4px 20px rgba(0,0,0,0.4)";
+
+            const titulo = document.createElement("div");
+
+            titulo.textContent = "Seleccione el track:";
+            titulo.style.fontSize = "18px";
+            titulo.style.marginBottom = "12px";
+            titulo.style.fontWeight = "bold";
+
+            ventana.appendChild(titulo);
+
+            const selector = document.createElement("select");
+
+            selector.style.width = "100%";
+            selector.style.padding = "10px";
+            selector.style.fontSize = "16px";
+            selector.style.marginBottom = "15px";
 
             tracks.forEach(function (track, indice) {
-              mensaje += indice + 1 + ". " + track.name + "\n";
+              const opcion = document.createElement("option");
+
+              opcion.value = indice;
+              opcion.textContent = track.name;
+
+              selector.appendChild(opcion);
             });
 
-            const respuesta = prompt(mensaje);
+            ventana.appendChild(selector);
 
-            if (respuesta === null) {
-              return;
-            }
+            const botones = document.createElement("div");
 
-            const indice = parseInt(respuesta, 10) - 1;
+            botones.style.display = "flex";
+            botones.style.gap = "10px";
+            botones.style.justifyContent = "flex-end";
 
-            if (
-              !Number.isInteger(indice) ||
-              indice < 0 ||
-              indice >= tracks.length
-            ) {
-              alert("Selección no válida.");
-              return;
-            }
+            const botonCargar = document.createElement("button");
 
-            const archivo = await tracks[indice].getFile();
+            botonCargar.textContent = "Cargar";
+            botonCargar.style.padding = "10px 18px";
+            botonCargar.style.fontSize = "16px";
 
-            const lector = new FileReader();
+            const botonCancelar = document.createElement("button");
 
-            lector.onload = function () {
-              const lineas = lector.result.split(/\r?\n/);
+            botonCancelar.textContent = "Cancelar";
+            botonCancelar.style.padding = "10px 18px";
+            botonCancelar.style.fontSize = "16px";
 
-              const puntosTrack = [];
+            botones.appendChild(botonCancelar);
+            botones.appendChild(botonCargar);
 
-              for (let i = 0; i + 10 < lineas.length; i += 11) {
-                const lat = parseFloat(lineas[i].trim());
+            ventana.appendChild(botones);
+            fondo.appendChild(ventana);
+            document.body.appendChild(fondo);
 
-                const lon = parseFloat(lineas[i + 1].trim());
+            botonCancelar.onclick = function () {
+              fondo.remove();
+            };
 
-                if (
-                  Number.isFinite(lat) &&
-                  Number.isFinite(lon) &&
-                  Math.abs(lat) <= 90 &&
-                  Math.abs(lon) <= 180
-                ) {
-                  puntosTrack.push([lat, lon]);
-                }
-              }
+            botonCargar.onclick = async function () {
+              const indice = parseInt(selector.value, 10);
 
-              if (puntosTrack.length < 2) {
-                alert("No se han encontrado suficientes puntos en el track.");
+              fondo.remove();
+
+              if (
+                !Number.isInteger(indice) ||
+                indice < 0 ||
+                indice >= tracks.length
+              ) {
+                alert("Selección no válida.");
                 return;
               }
 
-              if (lineaTrack !== null) {
-                mapa.removeLayer(lineaTrack);
+              try {
+                const archivo = await tracks[indice].getFile();
+
+                const lector = new FileReader();
+
+                lector.onload = function () {
+                  const lineas = lector.result.split(/\r?\n/);
+
+                  const puntosTrack = [];
+
+                  for (let i = 0; i + 10 < lineas.length; i += 11) {
+                    const lat = parseFloat(lineas[i].trim());
+                    const lon = parseFloat(lineas[i + 1].trim());
+
+                    if (
+                      Number.isFinite(lat) &&
+                      Number.isFinite(lon) &&
+                      Math.abs(lat) <= 90 &&
+                      Math.abs(lon) <= 180
+                    ) {
+                      puntosTrack.push([lat, lon]);
+                    }
+                  }
+
+                  if (puntosTrack.length < 2) {
+                    alert(
+                      "No se han encontrado suficientes puntos en el track.",
+                    );
+                    return;
+                  }
+
+                  if (lineaTrack !== null) {
+                    mapa.removeLayer(lineaTrack);
+                  }
+
+                  lineaTrack = L.polyline(puntosTrack, {
+                    color: "blue",
+                    weight: 4,
+                  }).addTo(mapa);
+
+                  mapa.fitBounds(lineaTrack.getBounds());
+                };
+
+                lector.readAsText(archivo);
+              } catch (error) {
+                console.log("Error al cargar el track:", error);
+                alert("No se ha podido cargar el track.");
               }
-
-              lineaTrack = L.polyline(puntosTrack, {
-                color: "blue",
-                weight: 4,
-              }).addTo(mapa);
-              mapa.fitBounds(lineaTrack.getBounds());
             };
-
-            lector.readAsText(archivo);
           } catch (error) {
-            console.log("Error al cargar el track:", error);
-
+            console.log("Error al seleccionar la carpeta:", error);
             return;
           }
         });
-
       document
         .getElementById("btnBorrarTrack")
         .addEventListener("click", async function () {
