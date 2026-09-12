@@ -283,7 +283,6 @@
       <button id="btnGrabarTrack">Grabar track</button>
       <button id="btnCargarTrack">Cargar track</button>
       <button id="btnBorrarTrack">Borrar track</button>
-      <button id="btnProbarMapaSD">Probar mapa SD</button>
     </div>
     <input
       type="file"
@@ -401,18 +400,12 @@
 
               tile.src = url;
             } catch (error) {
-              alert(
-                "ERROR MAPA SD\n\n" +
-                  "z = " +
-                  coords.z +
-                  "\nx = " +
-                  coords.x +
-                  "\ny = " +
-                  coords.y +
-                  "\n\n" +
-                  error.name +
-                  "\n" +
-                  error.message,
+              console.log(
+                "Tesela no encontrada:",
+                coords.z,
+                coords.x,
+                coords.y,
+                error.name,
               );
 
               done(error, tile);
@@ -445,6 +438,53 @@
           position: "topright",
         })
         .addTo(mapa);
+
+      mapa.on("baselayerchange", async function (e) {
+        if (e.name !== "Mapa offline Cantabria") {
+          return;
+        }
+
+        if (carpetaMapaSD !== null) {
+          return;
+        }
+
+        try {
+          const carpeta = await window.showDirectoryPicker();
+
+          carpetaMapaSD = carpeta;
+
+          const niveles = [];
+
+          for await (const entrada of carpeta.values()) {
+            if (
+              entrada.kind === "directory" &&
+              ["10", "11", "12", "13", "14", "15"].includes(entrada.name)
+            ) {
+              niveles.push(entrada.name);
+            }
+          }
+
+          if (niveles.length === 0) {
+            alert("La carpeta seleccionada no contiene las carpetas 10 a 15.");
+
+            carpetaMapaSD = null;
+
+            mapa.removeLayer(mapaOffline);
+
+            return;
+          }
+          mapaOffline.redraw();
+        } catch (error) {
+          console.log("Error al seleccionar la carpeta:", error);
+
+          carpetaMapaSD = null;
+
+          mapa.removeLayer(mapaOffline);
+
+          alert("No se ha podido acceder a la carpeta del mapa.");
+        }
+      });
+
       // Recuperar waypoints guardados
       let waypoints =
         JSON.parse(localStorage.getItem("pulgarcitoWaypoints")) || [];
@@ -1055,64 +1095,6 @@
                   error.message,
               );
             }
-          }
-        });
-
-      document
-        .getElementById("btnProbarMapaSD")
-        .addEventListener("click", async function () {
-          if (!window.showDirectoryPicker) {
-            alert("Este navegador no permite seleccionar carpetas.");
-            return;
-          }
-
-          try {
-            const carpeta = await window.showDirectoryPicker();
-
-            // Guardamos la carpeta seleccionada para el mapa offline
-            // carpetaMapaSD = carpeta;
-
-            // // PRUEBA: añadir directamente el mapa offline
-            // mapaOffline.addTo(mapa);
-
-            carpetaMapaSD = carpeta;
-
-            //mapaOffline.addTo(mapa);
-
-            // Comprobamos que contiene las carpetas de zoom
-            const niveles = [];
-
-            for await (const entrada of carpeta.values()) {
-              if (
-                entrada.kind === "directory" &&
-                ["12", "13", "14"].includes(entrada.name)
-              ) {
-                niveles.push(entrada.name);
-              }
-            }
-
-            if (niveles.length === 0) {
-              alert(
-                "La carpeta seleccionada no contiene las carpetas 12, 13 o 14.",
-              );
-              carpetaMapaSD = null;
-              return;
-            }
-
-            alert(
-              "Mapa offline seleccionado correctamente.\n\n" +
-                "Carpeta: " +
-                carpeta.name +
-                "\n\n" +
-                "Niveles encontrados: " +
-                niveles.sort().join(", "),
-            );
-          } catch (error) {
-            console.log("Error al seleccionar la carpeta del mapa:", error);
-
-            carpetaMapaSD = null;
-
-            alert("No se ha podido acceder a la carpeta del mapa.");
           }
         });
 
