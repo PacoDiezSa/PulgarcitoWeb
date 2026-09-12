@@ -344,19 +344,31 @@
       // MAPA DE FONDO: OFFLINE
       // ==============================
 
+      // ============================================================
+      // MAPA OFFLINE DESDE TARJETA SD
+      // ============================================================
+
+      // Cachés para acelerar el acceso a la tarjeta SD
+      const cacheCarpetasZ = new Map();
+      const cacheCarpetasX = new Map();
+      const cacheArchivos = new Map();
+      const cacheFicheros = new Map();
+
+      const MAX_CACHE_FICHEROS = 150;
+
       const MapaOffline = L.GridLayer.extend({
         options: {
           minZoom: 10,
           maxZoom: 18,
           maxNativeZoom: 15,
           attribution: "Mapa offline",
+
+          // Reducimos trabajo durante los desplazamientos
+          updateWhenZooming: false,
+          keepBuffer: 1,
         },
 
         createTile: function (coords, done) {
-          // alert(
-          //   "SOLICITA: z=" + coords.z + " x=" + coords.x + " y=" + coords.y,
-          // );
-
           const tile = document.createElement("img");
 
           tile.alt = "";
@@ -371,22 +383,75 @@
           }
 
           (async function () {
+            let url = null;
+
             try {
-              const carpetaZ = await carpetaMapaSD.getDirectoryHandle(
-                String(coords.z),
-              );
+              const claveZ = String(coords.z);
+              const claveX = claveZ + "/" + String(coords.x);
+              const claveTile = claveX + "/" + String(coords.y);
 
-              const carpetaX = await carpetaZ.getDirectoryHandle(
-                String(coords.x),
-              );
+              // ----------------------------------------------------
+              // 1. Carpeta Z: la abrimos una sola vez
+              // ----------------------------------------------------
 
-              const archivo = await carpetaX.getFileHandle(
-                String(coords.y) + ".jpg",
-              );
+              let carpetaZ = cacheCarpetasZ.get(claveZ);
 
-              const fichero = await archivo.getFile();
+              if (!carpetaZ) {
+                carpetaZ = await carpetaMapaSD.getDirectoryHandle(claveZ);
 
-              const url = URL.createObjectURL(fichero);
+                cacheCarpetasZ.set(claveZ, carpetaZ);
+              }
+
+              // ----------------------------------------------------
+              // 2. Carpeta X: la abrimos una sola vez
+              // ----------------------------------------------------
+
+              let carpetaX = cacheCarpetasX.get(claveX);
+
+              if (!carpetaX) {
+                carpetaX = await carpetaZ.getDirectoryHandle(String(coords.x));
+
+                cacheCarpetasX.set(claveX, carpetaX);
+              }
+
+              // ----------------------------------------------------
+              // 3. Archivo JPG: guardamos también su handle
+              // ----------------------------------------------------
+
+              let archivo = cacheArchivos.get(claveTile);
+
+              if (!archivo) {
+                archivo = await carpetaX.getFileHandle(
+                  String(coords.y) + ".jpg",
+                );
+
+                cacheArchivos.set(claveTile, archivo);
+              }
+
+              // ----------------------------------------------------
+              // 4. Fichero JPG: usamos caché si ya lo hemos leído
+              // ----------------------------------------------------
+
+              let fichero = cacheFicheros.get(claveTile);
+
+              if (!fichero) {
+                fichero = await archivo.getFile();
+
+                cacheFicheros.set(claveTile, fichero);
+
+                // Limitamos la memoria utilizada
+                if (cacheFicheros.size > MAX_CACHE_FICHEROS) {
+                  const primeraClave = cacheFicheros.keys().next().value;
+
+                  cacheFicheros.delete(primeraClave);
+                }
+              }
+
+              // ----------------------------------------------------
+              // 5. Mostramos el JPG
+              // ----------------------------------------------------
+
+              url = URL.createObjectURL(fichero);
 
               tile.onload = function () {
                 URL.revokeObjectURL(url);
@@ -452,6 +517,10 @@
           const carpeta = await window.showDirectoryPicker();
 
           carpetaMapaSD = carpeta;
+          cacheCarpetasZ.clear();
+          cacheCarpetasX.clear();
+          cacheArchivos.clear();
+          cacheFicheros.clear();
 
           const niveles = [];
 
