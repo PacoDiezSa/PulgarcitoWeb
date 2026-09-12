@@ -408,7 +408,7 @@
 
         //   return tile;
         // },
-        createTile: async function (coords, done) {
+        createTile: function (coords, done) {
           alert(
             "SOLICITA: z=" + coords.z + " x=" + coords.x + " y=" + coords.y,
           );
@@ -424,53 +424,53 @@
             );
             return tile;
           }
+          (async function () {
+            try {
+              const carpetaZ = await carpetaMapaSD.getDirectoryHandle(
+                String(coords.z),
+              );
 
-          try {
-            const carpetaZ = await carpetaMapaSD.getDirectoryHandle(
-              String(coords.z),
-            );
+              const carpetaX = await carpetaZ.getDirectoryHandle(
+                String(coords.x),
+              );
 
-            const carpetaX = await carpetaZ.getDirectoryHandle(
-              String(coords.x),
-            );
+              const archivo = await carpetaX.getFileHandle(
+                String(coords.y) + ".jpg",
+              );
 
-            const archivo = await carpetaX.getFileHandle(
-              String(coords.y) + ".jpg",
-            );
+              const fichero = await archivo.getFile();
 
-            const fichero = await archivo.getFile();
+              const url = URL.createObjectURL(fichero);
 
-            const url = URL.createObjectURL(fichero);
+              tile.onload = function () {
+                URL.revokeObjectURL(url);
+                done(null, tile);
+              };
 
-            tile.onload = function () {
-              URL.revokeObjectURL(url);
-              done(null, tile);
-            };
+              tile.onerror = function () {
+                URL.revokeObjectURL(url);
+                done(new Error("Error cargando JPG"), tile);
+              };
 
-            tile.onerror = function () {
-              URL.revokeObjectURL(url);
-              done(new Error("Error cargando JPG"), tile);
-            };
+              tile.src = url;
+            } catch (error) {
+              alert(
+                "ERROR MAPA SD\n\n" +
+                  "z = " +
+                  coords.z +
+                  "\nx = " +
+                  coords.x +
+                  "\ny = " +
+                  coords.y +
+                  "\n\n" +
+                  error.name +
+                  "\n" +
+                  error.message,
+              );
 
-            tile.src = url;
-          } catch (error) {
-            alert(
-              "ERROR MAPA SD\n\n" +
-                "z = " +
-                coords.z +
-                "\nx = " +
-                coords.x +
-                "\ny = " +
-                coords.y +
-                "\n\n" +
-                error.name +
-                "\n" +
-                error.message,
-            );
-
-            done(error, tile);
-          }
-
+              done(error, tile);
+            }
+          })();
           return tile;
         },
       });
