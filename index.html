@@ -1120,10 +1120,18 @@
             const carpeta = await window.showDirectoryPicker();
 
             // Guardamos la carpeta seleccionada para el mapa offline
+            // carpetaMapaSD = carpeta;
+
+            // // PRUEBA: añadir directamente el mapa offline
+            // mapaOffline.addTo(mapa);
+
             carpetaMapaSD = carpeta;
 
-            // PRUEBA: añadir directamente el mapa offline
+            alert("PASO 1: voy a añadir el mapa offline");
+
             mapaOffline.addTo(mapa);
+
+            alert("PASO 2: mapaOffline.addTo ejecutado");
 
             // Comprobamos que contiene las carpetas de zoom
             const niveles = [];
